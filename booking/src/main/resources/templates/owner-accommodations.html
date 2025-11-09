@@ -147,6 +147,39 @@
                     </div>
                 </div>
 
+                <!-- 設施與服務 -->
+                <div class="form-group">
+                    <label for="amenities">🏠 設施與服務</label>
+                    <textarea id="amenities" name="amenities" rows="3"
+                              placeholder="例如：WiFi, 停車場, 早餐, 健身房, 游泳池"></textarea>
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        請用逗號分隔多個設施
+                    </small>
+                </div>
+
+                <!-- 附近景點 -->
+                <div class="form-group">
+                    <label for="nearbyAttractions">🗺️ 附近景點</label>
+                    <textarea id="nearbyAttractions" name="nearbyAttractions" rows="3"
+                              placeholder="例如：台北101, 信義商圈, 國父紀念館"></textarea>
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        請用逗號分隔多個景點
+                    </small>
+                </div>
+
+                <!-- 聯絡資訊 -->
+                <div class="form-group">
+                    <label for="address">📍 詳細地址</label>
+                    <input type="text" id="address" name="address"
+                           placeholder="例如：台北市信義區信義路五段7號">
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">📞 聯絡電話</label>
+                    <input type="tel" id="phone" name="phone"
+                           placeholder="例如：02-1234-5678">
+                </div>
+
                 <button type="submit" class="btn btn-primary">新增</button>
             </form>
         </section>
@@ -197,6 +230,39 @@
                         <img src="" alt="新圖片預覽"
                              style="max-width: 100%; max-height: 150px; border: 1px solid #ddd; border-radius: 5px; display: block;">
                     </div>
+                </div>
+
+                <!-- 設施與服務 -->
+                <div class="form-group">
+                    <label for="editAmenities">🏠 設施與服務</label>
+                    <textarea id="editAmenities" name="amenities" rows="3"
+                              placeholder="例如：WiFi, 停車場, 早餐, 健身房, 游泳池"></textarea>
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        請用逗號分隔多個設施
+                    </small>
+                </div>
+
+                <!-- 附近景點 -->
+                <div class="form-group">
+                    <label for="editNearbyAttractions">🗺️ 附近景點</label>
+                    <textarea id="editNearbyAttractions" name="nearbyAttractions" rows="3"
+                              placeholder="例如：台北101, 信義商圈, 國父紀念館"></textarea>
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        請用逗號分隔多個景點
+                    </small>
+                </div>
+
+                <!-- 聯絡資訊 -->
+                <div class="form-group">
+                    <label for="editAddress">📍 詳細地址</label>
+                    <input type="text" id="editAddress" name="address"
+                           placeholder="例如：台北市信義區信義路五段7號">
+                </div>
+
+                <div class="form-group">
+                    <label for="editPhone">📞 聯絡電話</label>
+                    <input type="tel" id="editPhone" name="phone"
+                           placeholder="例如：02-1234-5678">
                 </div>
 
                 <div style="margin-top:20px;">
@@ -263,7 +329,11 @@
                     location: document.getElementById('location').value,
                     description: document.getElementById('description').value,
                     pricePerNight: document.getElementById('pricePerNight').value,
-                    imageUrl: imageUrl
+                    imageUrl: imageUrl,
+                    amenities: document.getElementById('amenities').value || null,
+                    nearbyAttractions: document.getElementById('nearbyAttractions').value || null,
+                    address: document.getElementById('address').value || null,
+                    phone: document.getElementById('phone').value || null
                 };
 
                 const response = await fetch('/api/owner/accommodations', {
@@ -335,6 +405,10 @@
                 document.getElementById('editDescription').value = acc.description;
                 document.getElementById('editPricePerNight').value = acc.pricePerNight;
                 document.getElementById('editImageUrl').value = acc.imageUrl || '';
+                document.getElementById('editAmenities').value = acc.amenities || '';
+                document.getElementById('editNearbyAttractions').value = acc.nearbyAttractions || '';
+                document.getElementById('editAddress').value = acc.address || '';
+                document.getElementById('editPhone').value = acc.phone || '';
 
                 // 顯示當前圖片
                 const currentImage = document.getElementById('editCurrentImage');
@@ -398,7 +472,11 @@
                     location: document.getElementById('editLocation').value,
                     description: document.getElementById('editDescription').value,
                     pricePerNight: document.getElementById('editPricePerNight').value,
-                    imageUrl: imageUrl
+                    imageUrl: imageUrl,
+                    amenities: document.getElementById('editAmenities').value || null,
+                    nearbyAttractions: document.getElementById('editNearbyAttractions').value || null,
+                    address: document.getElementById('editAddress').value || null,
+                    phone: document.getElementById('editPhone').value || null
                 };
 
                 // 使用傳入的 apiPrefix ( /api/owner/accommodations )
