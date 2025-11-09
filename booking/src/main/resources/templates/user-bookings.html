@@ -257,22 +257,6 @@
                     </div>`;
             }).join('');
         }
-                        <td>${booking.bookedQuantity}</td>
-                        <td class="text-success fw-bold">
-                            NT$ ${Number(booking.totalPrice).toLocaleString()}
-                        </td>
-                        <td>
-                            <span class="status-badge ${status}">
-                                ${getStatusText(status)}
-                            </span>
-                        </td>
-                        <td>
-                            ${getActionButtons(booking)}
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
 
         // 獲取操作按鈕
         function getActionButtons(booking) {
