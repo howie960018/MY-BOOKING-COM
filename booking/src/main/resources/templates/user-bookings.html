@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>我的訂單 - 訂房系統</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status-badge.PENDING {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .status-badge.CONFIRMED {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-badge.CANCELLED {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .filter-btn {
+            margin-right: 5px;
+        }
+        .filter-btn.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>我的訂單</h2>
+            <div>
+                <button class="btn btn-success me-2" onclick="exportMyBookings()">
+                    📥 匯出我的訂單
+                </button>
+                <a href="/" class="btn btn-secondary me-2">返回首頁</a>
+                <button class="btn btn-primary" onclick="loadBookings()">重新載入</button>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <div class="btn-group" role="group" aria-label="訂單狀態篩選">
+                <button class="btn btn-outline-secondary filter-btn active" data-status="all">全部</button>
+                <button class="btn btn-outline-warning filter-btn" data-status="PENDING">待確認</button>
+                <button class="btn btn-outline-success filter-btn" data-status="CONFIRMED">已確認</button>
+                <button class="btn btn-outline-danger filter-btn" data-status="CANCELLED">已取消</button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>訂單編號</th>
+                        <th>住宿名稱</th>
+                        <th>房型</th>
+                        <th>入住日期</th>
+                        <th>退房日期</th>
+                        <th>房間數</th>
+                        <th>總價</th>
+                        <th>狀態</th>
+                        <th>動作</th>
+                    </tr>
+                </thead>
+                <tbody id="bookingList"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let currentBookings = [];
+
+        // 處理狀態文字顯示
+        function getStatusText(status) {
+            switch(status) {
+                case 'CONFIRMED': return '已確認';
+                case 'CANCELLED': return '已取消';
+                case 'PENDING':
+                default: return '待確認';
+            }
+        }
+
+        // 顯示訂單列表
+        function displayBookings(bookings, filterStatus = 'all') {
+            const tbody = document.getElementById("bookingList");
+            const filteredBookings = filterStatus === 'all'
+                ? bookings
+                : bookings.filter(b => (b.status || 'PENDING') === filterStatus);
+
+            if (filteredBookings.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center">沒有符合條件的訂單</td>
+                    </tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filteredBookings.map(booking => {
+                const status = booking.status || 'PENDING';
+                return `
+                    <tr data-status="${status}">
+                        <td>${booking.id}</td>
+                        <td>${booking.roomType?.accommodation?.name || '-'}</td>
+                        <td>${booking.roomType?.name || '-'}</td>
+                        <td>${booking.checkIn}</td>
+                        <td>${booking.checkOut}</td>
+                        <td>${booking.bookedQuantity}</td>
+                        <td class="text-success fw-bold">
+                            NT$ ${Number(booking.totalPrice).toLocaleString()}
+                        </td>
+                        <td>
+                            <span class="status-badge ${status}">
+                                ${getStatusText(status)}
+                            </span>
+                        </td>
+                        <td>
+                            ${getActionButtons(booking)}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 獲取操作按鈕
+        function getActionButtons(booking) {
+            const status = booking.status || 'PENDING';
+            if (status === 'CANCELLED' || status === 'CONFIRMED') return '-';
+
+            return `
+                <button class="btn btn-danger btn-sm" onclick="cancelBooking(${booking.id})">
+                    取消訂單
+                </button>
+            `;
+        }
+
+        // 載入訂單列表
+        async function loadBookings() {
+            try {
+                const response = await fetch('/api/bookings');
+                if (!response.ok) throw new Error('載入失敗');
+                currentBookings = await response.json();
+
+                // 使用當前選中的篩選器
+                const activeFilter = document.querySelector('.filter-btn.active').dataset.status;
+                displayBookings(currentBookings, activeFilter);
+            } catch (error) {
+                console.error(error);
+                alert('載入訂單失敗：' + error.message);
+            }
+        }
+
+        // 取消訂單
+        async function cancelBooking(id) {
+            if (!confirm('確定要取消此訂單嗎？')) return;
+
+            try {
+                const response = await fetch(`/api/bookings/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) throw new Error('取消失敗');
+
+                await loadBookings();
+                alert('訂單已取消');
+            } catch (error) {
+                console.error(error);
+                alert('取消訂單失敗：' + error.message);
+            }
+        }
+
+        // 匯出我的訂單
+        function exportMyBookings() {
+            const btn = event.target;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '⏳ 匯出中...';
+            btn.disabled = true;
+
+            fetch('/api/export/bookings', { method: 'GET', credentials: 'same-origin' })
+                .then(response => { if (!response.ok) throw new Error('匯出失敗'); return response.blob(); })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `我的訂單_${Date.now()}.xlsx`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+
+                    btn.innerHTML = '✅ 匯出成功';
+                    setTimeout(() => { btn.innerHTML = originalHTML; btn.disabled = false; }, 1500);
+                })
+                .catch(err => {
+                    console.error('匯出錯誤:', err);
+                    alert('匯出失敗，請稍後再試');
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                });
+        }
+
+        // 註冊篩選器點擊事件
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // 更新按鈕狀態
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                // 篩選並顯示訂單
+                displayBookings(currentBookings, btn.dataset.status);
+            });
+        });
+
+        // 初始載入
+        document.addEventListener('DOMContentLoaded', loadBookings);
+    </script>
+</body>
+</html>

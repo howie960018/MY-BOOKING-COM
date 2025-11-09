@@ -1,0 +1,68 @@
+# ===== Database (MySQL) =====
+spring.datasource.url=jdbc:mysql://localhost:3306/booking_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Taipei
+spring.datasource.username=your_mysql_username
+spring.datasource.password=your_mysql_password
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA/Hibernate 設定
+spring.jpa.hibernate.ddl-auto=create-drop
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+
+# ===== Data Initialization =====
+# 自動執行 data.sql 初始化腳本
+spring.sql.init.mode=always
+# 延遲到 Hibernate 初始化後再執行
+spring.jpa.defer-datasource-initialization=true
+
+# ===== Thymeleaf & others =====
+spring.thymeleaf.cache=false
+spring.jackson.serialization.fail-on-empty-beans=false
+spring.jpa.properties.hibernate.enable_lazy_load_no_trans=true
+
+# ===== Server Encoding Configuration =====
+server.servlet.encoding.charset=UTF-8
+server.servlet.encoding.enabled=true
+server.servlet.encoding.force=true
+
+# ===== Spring Mail Configuration =====
+# Gmail SMTP 設定
+# 請參考專案中 GMAIL_SMTP_SETUP_GUIDE.md 了解如何設定應用程式密碼
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=your_email@gmail.com
+spring.mail.password=your_gmail_app_password
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+spring.mail.properties.mail.smtp.starttls.required=true
+spring.mail.properties.mail.smtp.connectiontimeout=5000
+spring.mail.properties.mail.smtp.timeout=5000
+spring.mail.properties.mail.smtp.writetimeout=5000
+
+# 寄件者資訊設定
+app.mail.from=your_email@gmail.com
+app.mail.from-name=Booking Service
+
+# 應用程式基礎 URL
+app.base-url=http://localhost:8080
+
+# ===== Swagger / OpenAPI Configuration =====
+# Swagger UI 路徑
+springdoc.swagger-ui.path=/swagger-ui.html
+# API 文件路徑
+springdoc.api-docs.path=/v3/api-docs
+# 依照標籤名稱 tags 排序
+springdoc.swagger-ui.tags-sorter=alpha
+# API 操作依字母排序
+springdoc.swagger-ui.operations-sorter=alpha
+# 啟用 Try it out 功能
+springdoc.swagger-ui.try-it-out-enabled=true
+# 顯示請求執行時間
+springdoc.swagger-ui.display-request-duration=true
+# 模型展開深度設定
+springdoc.swagger-ui.default-models-expand-depth=2
+# 預設不展開文件
+springdoc.swagger-ui.doc-expansion=none
+# 顯示擴展欄位
+springdoc.swagger-ui.show-extensions=true
+

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>房型列表</title>
+    <style>
+        body { font-family: "Microsoft JhengHei", Arial, sans-serif; margin: 40px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        th { background-color: #eee; }
+        button { padding: 5px 10px; }
+    </style>
+</head>
+<body>
+<h2 id="title">房型清單</h2>
+<table id="roomTable">
+    <thead>
+    <tr><th>房型名稱</th><th>描述</th><th>每晚價格</th><th>庫存</th><th>動作</th></tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const accId = params.get('accId');
+
+    fetch('/api/room-types/by-accommodation/' + accId)
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.querySelector('#roomTable tbody');
+            data.forEach(rt => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                <td>${rt.name}</td>
+                <td>${rt.description}</td>
+                <td>${rt.pricePerNight}</td>
+                <td>${rt.totalRooms}</td>
+                <td><button onclick="book(${rt.id})">預訂</button></td>
+            `;
+                tbody.appendChild(row);
+            });
+        });
+
+    function book(roomTypeId) {
+        const checkIn = prompt("輸入入住日期 (yyyy-MM-dd)：");
+        const checkOut = prompt("輸入退房日期 (yyyy-MM-dd)：");
+        const quantity = prompt("輸入房間數量：", "1");
+        fetch(`/api/bookings/by-room-type?roomTypeId=${roomTypeId}&checkIn=${checkIn}&checkOut=${checkOut}&quantity=${quantity}`, {
+            method: 'POST'
+        })
+            .then(res => {
+                if (res.ok) {
+                    alert("✅ 預訂成功！");
+                    location.reload();
+                } else {
+                    res.text().then(t => alert("❌ 預訂失敗：" + t));
+                }
+            });
+    }
+</script>
+</body>
+</html>

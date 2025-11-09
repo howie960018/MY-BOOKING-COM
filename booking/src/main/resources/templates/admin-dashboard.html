@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理員主頁</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 加入 Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">後台管理系統</a>
+        <form th:action="@{/logout}" method="post" class="d-flex">
+            <button type="submit" class="btn btn-outline-light btn-sm">登出</button>
+        </form>
+    </div>
+</nav>
+
+<div class="container mt-5">
+    <div class="text-center mb-4">
+        <h2>歡迎回來，管理員</h2>
+        <p class="text-muted">請選擇要管理的模組</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">訂單管理</h5>
+                    <p class="card-text">檢視與刪除所有客戶訂單。</p>
+                    <a href="/admin-bookings" class="btn btn-primary">進入</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">住宿管理</h5>
+                    <p class="card-text">新增、修改或刪除住宿資料。</p>
+                    <a href="/admin-accommodations" class="btn btn-success">進入</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">用戶管理</h5>
+                    <p class="card-text">管理用戶權限與房東升級。</p>
+                    <a href="/admin-users" class="btn btn-info">進入</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">報表中心</h5>
+                    <p class="card-text">匯出訂單明細與統計報表。</p>
+                    <button class="btn btn-warning" onclick="exportAdminReport()">匯出報表</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增：圖表區域 -->
+    <div class="row mt-5">
+        <div class="col-12 mb-3">
+            <h3>📊 數據分析儀表板</h3>
+            <hr>
+        </div>
+    </div>
+
+    <!-- 第一排圖表：訂單狀態 + 訂單趨勢 -->
+    <div class="row mb-4">
+        <!-- 訂單狀態圓餅圖 -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">訂單狀態分布</h5>
+                </div>
+                <div class="card-body">
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="orderStatusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 訂單趨勢折線圖 -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">近 30 天訂單趨勢</h5>
+                </div>
+                <div class="card-body">
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="ordersTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 第二排圖表：熱門住宿 + 月度營收 -->
+    <div class="row mb-4">
+        <!-- 熱門住宿橫條圖 -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">熱門住宿 Top 5</h5>
+                </div>
+                <div class="card-body">
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="topAccommodationsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 月度營收柱狀圖 -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">月度營收趨勢</h5>
+                </div>
+                <div class="card-body">
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="monthlyRevenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 全域變數儲存圖表實例
+let orderStatusChart = null;
+let ordersTrendChart = null;
+let topAccommodationsChart = null;
+let monthlyRevenueChart = null;
+
+// 頁面載入時初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadAllStatistics();
+});
+
+// 載入所有統計資料
+async function loadAllStatistics() {
+    try {
+        // 顯示載入提示
+        console.log('開始載入統計資料...');
+
+        // 一次性取得所有資料
+        const response = await fetch('/api/statistics/admin/dashboard');
+        if (!response.ok) {
+            throw new Error('載入統計資料失敗');
+        }
+
+        const data = await response.json();
+        console.log('統計資料載入成功:', data);
+
+        // 渲染各個圖表
+        renderOrderStatusChart(data.orderStatus);
+        renderOrdersTrendChart(data.ordersTrend);
+        renderTopAccommodationsChart(data.topAccommodations);
+        renderMonthlyRevenueChart(data.monthlyRevenue);
+
+    } catch (error) {
+        console.error('載入統計資料時發生錯誤:', error);
+
+        // 顯示友善的錯誤訊息
+        const chartSections = document.querySelectorAll('.card-body canvas');
+        chartSections.forEach(canvas => {
+            const parent = canvas.parentElement;
+            parent.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #dc3545;">
+                    <p style="font-size: 1.2rem; margin: 0;">📊</p>
+                    <p style="margin-top: 10px;">圖表載入失敗</p>
+                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="location.reload()">
+                        重新載入
+                    </button>
+                </div>
+            `;
+        });
+    }
+}
+
+// 1. 渲染訂單狀態圓餅圖
+function renderOrderStatusChart(data) {
+    const ctx = document.getElementById('orderStatusChart');
+    if (!ctx) return;
+
+    // 銷毀舊圖表
+    if (orderStatusChart) {
+        orderStatusChart.destroy();
+    }
+
+    orderStatusChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['待確認', '已確認', '已取消'],
+            datasets: [{
+                data: [
+                    data.PENDING || 0,
+                    data.CONFIRMED || 0,
+                    data.CANCELLED || 0
+                ],
+                backgroundColor: [
+                    'rgba(255, 193, 7, 0.8)',   // 黃色 - 待確認
+                    'rgba(40, 167, 69, 0.8)',   // 綠色 - 已確認
+                    'rgba(220, 53, 69, 0.8)'    // 紅色 - 已取消
+                ],
+                borderColor: [
+                    'rgba(255, 193, 7, 1)',
+                    'rgba(40, 167, 69, 1)',
+                    'rgba(220, 53, 69, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: {
+                            size: 12
+                        },
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${label}: ${value} 筆 (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// 2. 渲染訂單趨勢折線圖
+function renderOrdersTrendChart(data) {
+    const ctx = document.getElementById('ordersTrendChart');
+    if (!ctx) return;
+
+    if (ordersTrendChart) {
+        ordersTrendChart.destroy();
+    }
+
+    const dates = data.map(item => item.date);
+    const newOrders = data.map(item => item.new);
+    const confirmedOrders = data.map(item => item.confirmed);
+    const cancelledOrders = data.map(item => item.cancelled);
+
+    ordersTrendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [
+                {
+                    label: '新增訂單',
+                    data: newOrders,
+                    borderColor: 'rgba(13, 110, 253, 1)',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: '已確認',
+                    data: confirmedOrders,
+                    borderColor: 'rgba(40, 167, 69, 1)',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: '已取消',
+                    data: cancelledOrders,
+                    borderColor: 'rgba(220, 53, 69, 1)',
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    borderDash: [5, 5],
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.parsed.y} 筆`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    },
+                    title: {
+                        display: true,
+                        text: '訂單數量'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: '日期'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// 3. 渲染熱門住宿橫條圖
+function renderTopAccommodationsChart(data) {
+    const ctx = document.getElementById('topAccommodationsChart');
+    if (!ctx) return;
+
+    if (topAccommodationsChart) {
+        topAccommodationsChart.destroy();
+    }
+
+    const names = data.map(item => item.name);
+    const counts = data.map(item => item.count);
+
+    topAccommodationsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: names,
+            datasets: [{
+                label: '訂單數量',
+                data: counts,
+                backgroundColor: [
+                    'rgba(13, 110, 253, 0.8)',
+                    'rgba(25, 135, 84, 0.8)',
+                    'rgba(255, 193, 7, 0.8)',
+                    'rgba(220, 53, 69, 0.8)',
+                    'rgba(108, 117, 125, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(13, 110, 253, 1)',
+                    'rgba(25, 135, 84, 1)',
+                    'rgba(255, 193, 7, 1)',
+                    'rgba(220, 53, 69, 1)',
+                    'rgba(108, 117, 125, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            indexAxis: 'y', // 橫向顯示
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `訂單數: ${context.parsed.x} 筆`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    },
+                    title: {
+                        display: true,
+                        text: '訂單數量'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// 4. 渲染月度營收柱狀圖
+function renderMonthlyRevenueChart(data) {
+    const ctx = document.getElementById('monthlyRevenueChart');
+    if (!ctx) return;
+
+    if (monthlyRevenueChart) {
+        monthlyRevenueChart.destroy();
+    }
+
+    const months = data.map(item => item.month);
+    const revenues = data.map(item => item.revenue);
+
+    monthlyRevenueChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: months,
+            datasets: [{
+                label: '月度營收',
+                data: revenues,
+                backgroundColor: 'rgba(255, 193, 7, 0.8)',
+                borderColor: 'rgba(255, 193, 7, 1)',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `營收: NT$ ${context.parsed.y.toLocaleString()}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'NT$ ' + value.toLocaleString();
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: '營收金額 (NT$)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: '月份'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// 匯出管理員報表（原有功能保留）
+function exportAdminReport() {
+    const url = '/api/export/admin/bookings';
+    const link = document.createElement('a');
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    alert('報表匯出中，請稍候...');
+}
+</script>
+</body>
+</html>

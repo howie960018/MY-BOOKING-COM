@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>房東訂單管理</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="_csrf" th:content="${_csrf?.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
+    <style>
+        .filter-btn {
+            margin-right: 5px;
+        }
+        .filter-btn.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .status-badge.PENDING {
+            background-color: #ffc107;
+            color: #000;
+        }
+        .status-badge.CONFIRMED {
+            background-color: #198754;
+            color: white;
+        }
+        .status-badge.CANCELLED {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>我的訂單管理</h3>
+        <div>
+            <a href="/owner-dashboard" class="btn btn-secondary me-2">返回儀表板</a>
+            <button class="btn btn-primary" onclick="loadBookings()">重新載入</button>
+        </div>
+    </div>
+
+    <!-- 篩選區域 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">📋 訂單篩選</h5>
+        </div>
+        <div class="card-body">
+            <!-- 狀態篩選 -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">訂單狀態：</label>
+                    <div class="btn-group" role="group" aria-label="訂單狀態篩選">
+                        <button class="btn btn-outline-secondary filter-btn active" data-status="all">全部</button>
+                        <button class="btn btn-outline-warning filter-btn" data-status="PENDING">待確認</button>
+                        <button class="btn btn-outline-success filter-btn" data-status="CONFIRMED">已確認</button>
+                        <button class="btn btn-outline-danger filter-btn" data-status="CANCELLED">已取消</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 日期篩選 -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">日期範圍篩選：</label>
+                    <div class="d-flex align-items-center">
+                        <input type="date" id="filterStartDate" class="form-control form-control-sm me-2" placeholder="開始日期">
+                        <span class="me-2">至</span>
+                        <input type="date" id="filterEndDate" class="form-control form-control-sm me-2" placeholder="結束日期">
+                        <button class="btn btn-primary btn-sm" onclick="applyDateFilter()">篩選</button>
+                        <button class="btn btn-outline-secondary btn-sm ms-2" onclick="clearDateFilter()">清除</button>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">匯出報表：</label>
+                    <div class="d-flex align-items-center">
+                        <input type="date" id="exportStartDate" class="form-control form-control-sm me-2" placeholder="匯出開始日期">
+                        <span class="me-2">至</span>
+                        <input type="date" id="exportEndDate" class="form-control form-control-sm me-2" placeholder="匯出結束日期">
+                        <button class="btn btn-success btn-sm" onclick="exportBookings()">📥 匯出 Excel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>客戶</th>
+                <th>我的住宿</th>
+                <th>房型</th>
+                <th>入住</th>
+                <th>退房</th>
+                <th>間數</th>
+                <th>總價</th>
+                <th>狀態</th>
+                <th>動作</th>
+            </tr>
+            </thead>
+            <tbody id="bookings"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // 獲取 CSRF token
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+    // 創建通用的 fetch headers
+    const getHeaders = () => {
+        const headers = { 'Content-Type': 'application/json' };
+        if (csrfToken && csrfHeader) {
+            headers[csrfHeader] = csrfToken;
+        }
+        return headers;
+    };
+
+    let currentBookings = []; // 儲存當前載入的訂單
+
+    // 處理狀態文字顯示
+    function getStatusText(status) {
+        switch(status) {
+            case 'CONFIRMED': return '已確認';
+            case 'CANCELLED': return '已取消';
+            case 'PENDING':
+            default: return '待確認';
+        }
+    }
+
+    // 顯示訂單列表
+    function displayBookings(bookings, filterStatus = 'all') {
+        const tbody = document.getElementById("bookings");
+        const filteredBookings = filterStatus === 'all'
+            ? bookings
+            : bookings.filter(b => (b.status || 'PENDING') === filterStatus);
+
+        tbody.innerHTML = filteredBookings.map(b => {
+            const status = b.status || 'PENDING';
+            return `
+                <tr data-status="${status}">
+                    <td>${b.id}</td>
+                    <td>${b.user?.username || '-'}</td>
+                    <td>${b.roomType?.accommodation?.name || '-'}</td>
+                    <td>${b.roomType?.name || '-'}</td>
+                    <td>${b.checkIn}</td>
+                    <td>${b.checkOut}</td>
+                    <td>${b.bookedQuantity}</td>
+                    <td class="text-success fw-bold">
+                        ${b.totalPrice ? 'NT$ ' + Number(b.totalPrice).toLocaleString() : '-'}
+                    </td>
+                    <td>
+                        <span class="badge status-badge ${status}">
+                            ${getStatusText(status)}
+                        </span>
+                    </td>
+                    <td>
+                        ${getActionButtons(b)}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        if (filteredBookings.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="text-center">沒有符合條件的訂單</td>
+                </tr>
+            `;
+        }
+    }
+
+    // 日期篩選功能
+    function applyDateFilter() {
+        const startDate = document.getElementById('filterStartDate').value;
+        const endDate = document.getElementById('filterEndDate').value;
+
+        if (!startDate && !endDate) {
+            alert('請選擇至少一個日期範圍');
+            return;
+        }
+
+        let filteredBookings = [...currentBookings];
+
+        // 根據入住日期篩選
+        if (startDate) {
+            filteredBookings = filteredBookings.filter(b => b.checkIn >= startDate);
+        }
+        if (endDate) {
+            filteredBookings = filteredBookings.filter(b => b.checkIn <= endDate);
+        }
+
+        // 取得當前狀態篩選
+        const activeFilter = document.querySelector('.filter-btn.active').dataset.status;
+        const statusFilteredBookings = activeFilter === 'all'
+            ? filteredBookings
+            : filteredBookings.filter(b => (b.status || 'PENDING') === activeFilter);
+
+        // 顯示篩選結果
+        const tbody = document.getElementById("bookings");
+        tbody.innerHTML = statusFilteredBookings.map(b => {
+            const status = b.status || 'PENDING';
+            return `
+                <tr data-status="${status}">
+                    <td>${b.id}</td>
+                    <td>${b.user?.username || '-'}</td>
+                    <td>${b.roomType?.accommodation?.name || '-'}</td>
+                    <td>${b.roomType?.name || '-'}</td>
+                    <td>${b.checkIn}</td>
+                    <td>${b.checkOut}</td>
+                    <td>${b.bookedQuantity}</td>
+                    <td class="text-success fw-bold">
+                        ${b.totalPrice ? 'NT$ ' + Number(b.totalPrice).toLocaleString() : '-'}
+                    </td>
+                    <td>
+                        <span class="badge status-badge ${status}">
+                            ${getStatusText(status)}
+                        </span>
+                    </td>
+                    <td>
+                        ${getActionButtons(b)}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        if (statusFilteredBookings.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="text-center">沒有符合篩選條件的訂單</td>
+                </tr>
+            `;
+        }
+
+        // 更新計數顯示
+        updateFilterInfo(startDate, endDate, statusFilteredBookings.length);
+    }
+
+    // 清除日期篩選
+    function clearDateFilter() {
+        document.getElementById('filterStartDate').value = '';
+        document.getElementById('filterEndDate').value = '';
+
+        // 重新顯示所有訂單（保持狀態篩選）
+        const activeFilter = document.querySelector('.filter-btn.active').dataset.status;
+        displayBookings(currentBookings, activeFilter);
+
+        // 清除篩選資訊
+        const filterInfo = document.getElementById('filterInfo');
+        if (filterInfo) {
+            filterInfo.remove();
+        }
+    }
+
+    // 更新篩選資訊顯示
+    function updateFilterInfo(startDate, endDate, count) {
+        // 移除舊的篩選資訊
+        const oldInfo = document.getElementById('filterInfo');
+        if (oldInfo) {
+            oldInfo.remove();
+        }
+
+        // 建立新的篩選資訊
+        const filterInfo = document.createElement('div');
+        filterInfo.id = 'filterInfo';
+        filterInfo.className = 'alert alert-info mt-3';
+        filterInfo.innerHTML = `
+            <strong>📅 日期篩選已套用：</strong>
+            ${startDate ? `從 ${startDate}` : ''}
+            ${startDate && endDate ? ' 至 ' : ''}
+            ${endDate ? `到 ${endDate}` : ''}
+            - 找到 <strong>${count}</strong> 筆訂單
+        `;
+
+        // 插入到表格前
+        const tableContainer = document.querySelector('.table-responsive');
+        tableContainer.parentNode.insertBefore(filterInfo, tableContainer);
+    }
+
+    // 獲取操作按鈕
+    function getActionButtons(booking) {
+        const status = booking.status || 'PENDING';
+        if (status === 'CANCELLED') return '';
+
+        let buttons = [];
+        if (status === 'PENDING') {
+            buttons.push(`<button class="btn btn-success btn-sm me-1" onclick="confirmBooking(${booking.id})">確認訂單</button>`);
+        }
+        buttons.push(`<button class="btn btn-danger btn-sm" onclick="cancelBooking(${booking.id})">取消訂單</button>`);
+        return buttons.join('');
+    }
+
+    // 載入訂單
+    async function loadBookings() {
+        try {
+            const res = await fetch("/api/owner/bookings", {
+                headers: getHeaders(),
+                credentials: 'same-origin'
+            });
+            if (!res.ok) throw new Error('載入失敗');
+            currentBookings = await res.json();
+
+            // 使用當前選中的篩選器
+            const activeFilter = document.querySelector('.filter-btn.active').dataset.status;
+            displayBookings(currentBookings, activeFilter);
+        } catch (err) {
+            console.error(err);
+            alert("載入訂單失敗：" + (err.message || '未知錯誤'));
+        }
+    }
+
+    // 確認訂單
+    async function confirmBooking(id) {
+        if (!confirm("確定要確認此訂單嗎？")) return;
+
+        try {
+            const res = await fetch(`/api/owner/bookings/${id}/confirm`, {
+                method: "POST",
+                headers: getHeaders(),
+                credentials: 'same-origin'
+            });
+
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || '確認失敗');
+            }
+
+            await loadBookings();
+            alert('訂單已確認');
+        } catch (err) {
+            console.error(err);
+            alert(err.message || "確認訂單失敗");
+        }
+    }
+
+    // 取消訂單
+    async function cancelBooking(id) {
+        if (!confirm("確定要取消此訂單嗎？")) return;
+
+        try {
+            const res = await fetch(`/api/owner/bookings/${id}/cancel`, {
+                method: "POST",
+                headers: getHeaders(),
+                credentials: 'same-origin'
+            });
+
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || '取消失敗');
+            }
+
+            await loadBookings();
+            alert('訂單已取消');
+        } catch (err) {
+            console.error(err);
+            alert(err.message || "取消訂單失敗");
+        }
+    }
+
+    // 匯出訂單到 Excel
+    function exportBookings() {
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+
+        // 取得當前篩選狀態
+        const activeFilter = document.querySelector('.filter-btn.active')?.dataset.status || 'all';
+        const status = activeFilter !== 'all' ? activeFilter : '';
+
+        // 建立下載 URL
+        let url = '/api/export/owner/revenue';
+        const params = new URLSearchParams();
+        if (status) params.append('status', status);
+
+        // 日期篩選
+        const startDate = document.getElementById('exportStartDate')?.value;
+        const endDate = document.getElementById('exportEndDate')?.value;
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+        if (params.toString()) url += '?' + params.toString();
+
+        btn.innerHTML = '⏳ 匯出中...';
+        btn.disabled = true;
+
+        fetch(url, {
+            method: 'GET',
+            headers: getHeaders(),
+            credentials: 'same-origin'
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('匯出失敗');
+                return response.blob();
+            })
+            .then(blob => {
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = `房東訂單報表_${new Date().toISOString().split('T')[0]}.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(downloadUrl);
+
+                btn.innerHTML = '✅ 匯出成功';
+                setTimeout(() => { btn.innerHTML = originalHTML; btn.disabled = false; }, 1500);
+            })
+            .catch(err => {
+                console.error('匯出錯誤:', err);
+                alert('匯出失敗，請稍後再試');
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            });
+    }
+
+    // 註冊篩選器點擊事件
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            // 更新按鈕狀態
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // 檢查是否有日期篩選
+            const startDate = document.getElementById('filterStartDate').value;
+            const endDate = document.getElementById('filterEndDate').value;
+
+            if (startDate || endDate) {
+                // 如果有日期篩選，重新套用篩選
+                applyDateFilter();
+            } else {
+                // 沒有日期篩選，直接顯示狀態篩選結果
+                displayBookings(currentBookings, btn.dataset.status);
+            }
+        });
+    });
+
+    // 頁面載入時執行
+    loadBookings();
+</script>
+</body>
+</html>

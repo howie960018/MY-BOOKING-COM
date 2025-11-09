@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>用戶管理 - 訂房系統</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-4">
+        <h2 class="mb-4">用戶管理</h2>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>用戶名</th>
+                                <th>當前角色</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                            <!-- 用户列表将通过 JavaScript 动态加载 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 加载用户列表
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/admin/users');
+                if (!response.ok) throw new Error('載入失敗');
+
+                const users = await response.json();
+                const tbody = document.getElementById('userTableBody');
+
+                tbody.innerHTML = users.map(user => `
+                    <tr>
+                        <td>${user.id}</td>
+                        <td>${user.username}</td>
+                        <td>${formatRole(user.role)}</td>
+                        <td>
+                            ${user.role === 'ROLE_USER'
+                                ? `<button class="btn btn-primary btn-sm" onclick="promoteToOwner(${user.id})">升級為房東</button>`
+                                : user.role === 'ROLE_OWNER'
+                                    ? `<button class="btn btn-warning btn-sm" onclick="demoteToUser(${user.id})">降級為用戶</button>`
+                                    : ''}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                alert('載入用戶列表失敗：' + error.message);
+            }
+        }
+
+        // 格式化角色显示
+        function formatRole(role) {
+            switch (role) {
+                case 'ROLE_USER': return '一般用戶';
+                case 'ROLE_OWNER': return '房東';
+                case 'ROLE_ADMIN': return '管理員';
+                default: return role;
+            }
+        }
+
+        // 升级为房东
+        async function promoteToOwner(userId) {
+            if (!confirm('確定要將此用戶升級為房東嗎？')) return;
+
+            try {
+                const response = await fetch(`/api/admin/users/${userId}/role`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ role: 'ROLE_OWNER' })
+                });
+
+                if (!response.ok) throw new Error('操作失敗');
+
+                alert('已成功將用戶升級為房東');
+                loadUsers(); // 重新加载用户列表
+            } catch (error) {
+                alert('操作失敗：' + error.message);
+            }
+        }
+
+        // 降级为普通用户
+        async function demoteToUser(userId) {
+            if (!confirm('確定要將此房東降級為一般用戶嗎？')) return;
+
+            try {
+                const response = await fetch(`/api/admin/users/${userId}/role`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ role: 'ROLE_USER' })
+                });
+
+                if (!response.ok) throw new Error('操作失敗');
+
+                alert('已成功將房東降級為一般用戶');
+                loadUsers(); // 重新加载用户列表
+            } catch (error) {
+                alert('操作失敗：' + error.message);
+            }
+        }
+
+        // 页面加载时获取用户列表
+        document.addEventListener('DOMContentLoaded', loadUsers);
+    </script>
+</body>
+</html>
+

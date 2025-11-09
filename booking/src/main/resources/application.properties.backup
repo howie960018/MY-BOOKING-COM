@@ -1,0 +1,70 @@
+
+# ===== Database (MySQL) =====
+# ?????????? Zeabur ????????????????
+spring.datasource.url=${DATABASE_URL:jdbc:mysql://localhost:3306/booking_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Taipei}
+spring.datasource.username=${DB_USERNAME:root}
+spring.datasource.password=${DB_PASSWORD:2FTA93108}
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# ?????
+spring.jpa.hibernate.ddl-auto=create-drop
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+
+# ===== Data Initialization =====
+# ?? data.sql ????
+spring.sql.init.mode=always
+# ???????? Hibernate ????
+spring.jpa.defer-datasource-initialization=true
+
+# ===== Thymeleaf & others =====
+spring.thymeleaf.cache=false
+spring.jackson.serialization.fail-on-empty-beans=false
+spring.jpa.properties.hibernate.enable_lazy_load_no_trans=true
+
+# ===== Server Encoding Configuration =====
+server.servlet.encoding.charset=UTF-8
+server.servlet.encoding.enabled=true
+server.servlet.encoding.force=true
+
+# ===== Spring Mail Configuration =====
+# Gmail SMTP ??
+# ?????? GMAIL_SMTP_SETUP_GUIDE.md ?????
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=howie960018@gmail.com
+spring.mail.password=rgsqpqcanthwqars
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+spring.mail.properties.mail.smtp.starttls.required=true
+spring.mail.properties.mail.smtp.connectiontimeout=5000
+spring.mail.properties.mail.smtp.timeout=5000
+spring.mail.properties.mail.smtp.writetimeout=5000
+
+# ???????
+app.mail.from=howie960018@gmail.com
+app.mail.from-name=Booking Service
+
+# ????????? URL
+app.base-url=http://localhost:8080
+
+# ===== Swagger / OpenAPI Configuration =====
+# Swagger UI ??
+springdoc.swagger-ui.path=/swagger-ui.html
+# API ????
+springdoc.api-docs.path=/v3/api-docs
+# ???????tags ???
+springdoc.swagger-ui.tags-sorter=alpha
+# API ??????
+springdoc.swagger-ui.operations-sorter=alpha
+# ?? Try it out ??
+springdoc.swagger-ui.try-it-out-enabled=true
+# ????????
+springdoc.swagger-ui.display-request-duration=true
+# ????????
+springdoc.swagger-ui.default-models-expand-depth=2
+# ??????
+springdoc.swagger-ui.doc-expansion=none
+# ??????
+springdoc.swagger-ui.show-extensions=true
+

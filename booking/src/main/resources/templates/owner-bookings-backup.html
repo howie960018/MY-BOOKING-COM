@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>訂單管理 - 訂房系統</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .booking-list {
+            display: grid;
+            gap: 20px;
+        }
+        .booking-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status-pending { color: #ffc107; }
+        .status-confirmed { color: #28a745; }
+        .status-cancelled { color: #dc3545; }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .filters {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status-badge.null,
+        .status-badge.undefined,
+        .status-badge.PENDING {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-badge.CONFIRMED { background: #d4edda; color: #155724; }
+        .status-badge.CANCELLED { background: #f8d7da; color: #721c24; }
+        .filter-btn {
+            padding: 8px 16px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: #e9ecef;
+        }
+        .filter-btn.active {
+            background: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>訂單管理</h1>
+        <nav>
+            <a href="/owner-dashboard">返回儀表板</a>
+            <a href="/owner-accommodations">管理住宿</a>
+            <form action="/logout" method="POST" style="display: inline;">
+                <button type="submit" class="logout-btn" style="background: none; border: none; color: white; cursor: pointer; padding: 0.5rem 1rem;">登出</button>
+            </form>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="mb-3">
+            <button class="btn btn-success" onclick="exportOwnerBookings()" style="background: #28a745; color: white; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer;">
+                📊 匯出營收報表
+            </button>
+        </div>
+
+        <section class="filters">
+            <h2>篩選器</h2>
+            <button class="filter-btn active" data-status="all">全部</button>
+            <button class="filter-btn" data-status="PENDING">待確認</button>
+            <button class="filter-btn" data-status="CONFIRMED">已確認</button>
+            <button class="filter-btn" data-status="CANCELLED">已取消</button>
+        </section>
+
+        <section class="booking-list">
+            <!-- 這裡將由JavaScript動態載入訂單列表 -->
+        </section>
+    </main>
+
+    <script>
+        // 載入訂單列表
+        async function loadBookings() {
+            try {
+                const response = await fetch('/api/bookings');
+                if (!response.ok) throw new Error('載入失敗');
+                const bookings = await response.json();
+                displayBookings(bookings);
+            } catch (error) {
+                alert('載入訂單資料失敗：' + error.message);
+            }
+        }
+
+        // 顯示訂單
+        function displayBookings(bookings) {
+            const listSection = document.querySelector('.booking-list');
+            if (bookings.length === 0) {
+                listSection.innerHTML = '<p>目前沒有訂單</p>';
+                return;
+            }
+
+            listSection.innerHTML = bookings.map(booking => {
+                // 確保訂單狀態有值，如果是 null 或 undefined，則設為 'PENDING'
+                const status = booking.status || 'PENDING';
+                return `
+                    <div class="booking-card" data-status="${status}">
+                        <h3>訂單編號：${booking.id}</h3>
+                        <p>住宿：${booking.roomType.accommodation.name}</p>
+                        <p>房型：${booking.roomType.name}</p>
+                        <p>客戶：${booking.user.username}</p>
+                        <p>入住日期：${booking.checkIn}</p>
+                        <p>退房日期：${booking.checkOut}</p>
+                        <p>金額：NT$${booking.totalPrice}</p>
+                        <p>狀態：<span class="status-badge ${status}">${getStatusText(status)}</span></p>
+                        ${getActionButtons(booking)}
+                    </div>
+                `;
+            }).join('');
+
+            // 應用當前選中的篩選器
+            const activeFilter = document.querySelector('.filter-btn.active').dataset.status;
+            filterBookings(activeFilter);
+        }
+
+        // 獲取狀態文字
+        function getStatusText(status) {
+            switch(status) {
+                case 'CONFIRMED': return '已確認';
+                case 'CANCELLED': return '已取消';
+                case 'PENDING': return '待確認';
+                default: return '待確認';
+            }
+        }
+
+        // 獲取操作按鈕
+        function getActionButtons(booking) {
+            const status = booking.status || 'PENDING';
+            if (status === 'CANCELLED') return '';
+            if (status === 'CONFIRMED') {
+                return `<button class="btn btn-danger" onclick="cancelBooking(${booking.id})">取消訂單</button>`;
+            }
+            return `
+                <button class="btn btn-success" onclick="confirmBooking(${booking.id})">確認訂單</button>
+                <button class="btn btn-danger" onclick="cancelBooking(${booking.id})">取消訂單</button>
+            `;
+        }
+
+        // 篩選訂單 - 修正後
+        function filterBookings(status) {
+            const cards = document.querySelectorAll('.booking-card');
+            cards.forEach(card => {
+                const cardStatus = card.dataset.status; // 這裡的值肯定已經是 PENDING, CONFIRMED, 或 CANCELLED
+
+                // 邏輯更清晰：
+                // 1. 如果篩選器是 'all'，顯示。
+                // 2. 如果卡片狀態等於篩選狀態，顯示。
+                if (status === 'all' || cardStatus === status) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // 更新篩選按鈕狀態
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.status === status);
+            });
+        }
+
+        // 確認訂單
+        async function confirmBooking(id) {
+            if (!confirm('確定要確認此訂單嗎？')) return;
+
+            try {
+                const response = await fetch(`/api/owner/bookings/${id}/confirm`, {
+                    method: 'POST'
+                });
+                if (!response.ok) throw new Error('確認失敗');
+
+                await loadBookings(); // 重新載入訂單列表
+            } catch (error) {
+                alert('確認失敗：' + error.message);
+            }
+        }
+
+        // 取消訂單
+        async function cancelBooking(id) {
+            if (!confirm('確定要取消此訂單嗎？')) return;
+
+            try {
+                const response = await fetch(`/api/owner/bookings/${id}/cancel`, {
+                    method: 'POST'
+                });
+                if (!response.ok) throw new Error('取消失敗');
+
+                await loadBookings(); // 重新載入訂單列表
+            } catch (error) {
+                alert('取消失敗：' + error.message);
+            }
+        }
+
+        // 匯出房東訂單報表
+        function exportOwnerBookings() {
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ 匯出中...';
+            btn.disabled = true;
+
+            fetch('/api/export/owner/revenue', { method: 'GET', credentials: 'same-origin' })
+                .then(response => { if (!response.ok) throw new Error('匯出失敗'); return response.blob(); })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `營收報表_${Date.now()}.xlsx`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+
+                    btn.innerHTML = '✅ 匯出成功';
+                    setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 1500);
+                })
+                .catch(err => {
+                    console.error('匯出錯誤:', err);
+                    alert('匯出失敗，請稍後再試');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                });
+        }
+
+        // 註冊篩選器點擊事件
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBookings(btn.dataset.status);
+            });
+        });
+
+        // 頁面載入時載入訂單列表
+        document.addEventListener('DOMContentLoaded', loadBookings);
+    </script>
+</body>
+</html>

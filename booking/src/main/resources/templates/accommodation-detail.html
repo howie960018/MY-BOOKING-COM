@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>住宿詳情</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .main-image {
+            grid-column: 1 / 3;
+            grid-row: 1 / 3;
+        }
+
+        .gallery-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .gallery-image:hover {
+            transform: scale(1.05);
+        }
+
+        .main-image .gallery-image {
+            height: 400px;
+        }
+
+        .side-image .gallery-image {
+            height: 195px;
+        }
+
+        .rating-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .rating-text {
+            font-size: 18px;
+            color: #666;
+            margin-left: 10px;
+        }
+
+        .amenity-item {
+            display: inline-block;
+            background: #e7f3ff;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 20px;
+            border: 1px solid #90caf9;
+        }
+
+        .room-type-card {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: white;
+            transition: box-shadow 0.3s;
+        }
+
+        .room-type-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .review-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .review-rating {
+            color: #ffc107;
+            font-size: 18px;
+        }
+
+        .review-author {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .review-date {
+            color: #999;
+            font-size: 13px;
+        }
+
+        .review-helpful {
+            color: #28a745;
+            font-size: 13px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 30px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .add-review-form {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .star-rating {
+            font-size: 30px;
+            cursor: pointer;
+            color: #ddd;
+        }
+
+        .star-rating .star {
+            transition: color 0.2s;
+        }
+
+        .star-rating .star.active,
+        .star-rating .star:hover {
+            color: #ffc107;
+        }
+
+        .nearby-item {
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-left: 3px solid #667eea;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        .contact-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .breadcrumb {
+            background: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 導航欄 -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">🏨 訂房系統</a>
+        <div class="navbar-nav ms-auto">
+            <a href="/user/favorites" class="btn btn-outline-light btn-sm me-2">❤️ 我的收藏</a>
+            <a href="/user-bookings" class="btn btn-outline-light btn-sm me-2">📋 我的訂單</a>
+            <a href="/user/profile" class="btn btn-outline-light btn-sm me-2">👤 個人資料</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <!-- 麵包屑 -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">首頁</a></li>
+            <li class="breadcrumb-item active" aria-current="page" id="breadcrumb-name">住宿詳情</li>
+        </ol>
+    </nav>
+
+    <!-- 圖片畫廊 -->
+    <div class="image-gallery" id="imageGallery">
+        <!-- 動態載入 -->
+    </div>
+
+    <div class="row">
+        <!-- 左側：住宿資訊 -->
+        <div class="col-lg-8">
+            <!-- 基本資訊 -->
+            <div class="mb-4">
+                <h1 id="accommodationName"></h1>
+                <p class="text-muted">
+                    <span id="accommodationLocation"></span> •
+                    <span id="accommodationDistance"></span>
+                </p>
+                <div class="mb-3">
+                    <span class="rating-badge" id="ratingBadge"></span>
+                    <span class="rating-text" id="ratingText"></span>
+                </div>
+            </div>
+
+            <!-- 設施 -->
+            <div class="section-title">🏠 設施與服務</div>
+            <div id="amenitiesList"></div>
+
+            <!-- 住宿描述 -->
+            <div class="section-title">📝 住宿介紹</div>
+            <p id="accommodationDescription"></p>
+
+            <!-- 房型列表 -->
+            <div class="section-title">🛏️ 房型選擇</div>
+            <div id="roomTypesList"></div>
+
+            <!-- 附近景點 -->
+            <div class="section-title">🗺️ 附近景點</div>
+            <div id="nearbyAttractionsList"></div>
+
+            <!-- 評論區 -->
+            <div class="section-title">⭐ 住客評論</div>
+
+            <!-- 新增評論表單 -->
+            <div class="add-review-form" id="addReviewForm" style="display:none;">
+                <h5>分享您的體驗</h5>
+                <div class="mb-3">
+                    <label class="form-label">評分</label>
+                    <div class="star-rating" id="starRating">
+                        <span class="star" data-value="1">★</span>
+                        <span class="star" data-value="2">★</span>
+                        <span class="star" data-value="3">★</span>
+                        <span class="star" data-value="4">★</span>
+                        <span class="star" data-value="5">★</span>
+                    </div>
+                    <input type="hidden" id="ratingValue" value="0">
+                </div>
+                <div class="mb-3">
+                    <label for="reviewComment" class="form-label">評論內容</label>
+                    <textarea class="form-control" id="reviewComment" rows="4"
+                              placeholder="分享您的住宿體驗..."></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="submitReview()">發表評論</button>
+                <button class="btn btn-secondary" onclick="cancelReview()">取消</button>
+            </div>
+
+            <button class="btn btn-outline-primary mb-3" onclick="showReviewForm()" id="showReviewBtn">
+                ✍️ 撰寫評論
+            </button>
+
+            <!-- 評論列表 -->
+            <div id="reviewsList"></div>
+        </div>
+
+        <!-- 右側：訂房資訊 -->
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-body">
+                    <h4>住宿資訊</h4>
+                    <hr>
+                    <div class="mb-3">
+                        <div class="text-muted">每晚價格起</div>
+                        <h2 class="text-primary">NT$ <span id="pricePerNight"></span></h2>
+                    </div>
+                    <button class="btn btn-success w-100 mb-2" onclick="scrollToRoomTypes()">
+                        查看房型與價格
+                    </button>
+                    <button class="btn btn-primary w-100 mb-2" onclick="openQuickBookingModal()">
+                        🎯 現在就預訂
+                    </button>
+                    <button class="btn btn-outline-danger w-100" onclick="addToFavorites()" id="favoriteBtn">
+                        ❤️ 加入收藏
+                    </button>
+
+                    <!-- 聯絡資訊 -->
+                    <div class="contact-info">
+                        <h6>📞 聯絡資訊</h6>
+                        <p class="mb-1">
+                            <strong>地址：</strong><br>
+                            <span id="contactAddress"></span>
+                        </p>
+                        <p class="mb-0">
+                            <strong>電話：</strong><br>
+                            <span id="contactPhone"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 訂房確認 Modal -->
+<div class="modal fade" id="bookingModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">🎯 確認訂房</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <h6 id="modalAccommodationName" class="text-primary"></h6>
+                    <p class="text-muted" id="modalLocation"></p>
+                </div>
+
+                <!-- 選擇房型 -->
+                <div class="mb-3">
+                    <label class="form-label">選擇房型 <span class="text-danger">*</span></label>
+                    <select class="form-select" id="modalRoomTypeSelect" onchange="updateBookingPrice()">
+                        <option value="">請選擇房型</option>
+                    </select>
+                    <div class="form-text" id="roomTypeStock"></div>
+                </div>
+
+                <!-- 日期選擇 -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">入住日期 <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="modalCheckIn"
+                               onchange="validateDates(); updateBookingPrice();">
+                        <div class="invalid-feedback" id="checkInError"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">退房日期 <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="modalCheckOut"
+                               onchange="validateDates(); updateBookingPrice();">
+                        <div class="invalid-feedback" id="checkOutError"></div>
+                    </div>
+                </div>
+
+                <!-- 房間數量 -->
+                <div class="mb-3">
+                    <label class="form-label">房間數量 <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" id="modalQuantity"
+                           min="1" max="1" value="1"
+                           onchange="validateQuantity(); updateBookingPrice();">
+                    <div class="form-text">
+                        <span id="quantityHint">請先選擇房型</span>
+                    </div>
+                    <div class="invalid-feedback" id="quantityError"></div>
+                </div>
+
+                <!-- 總價顯示 -->
+                <div class="alert alert-info">
+                    <h5>訂單總計</h5>
+                    <div class="d-flex justify-content-between">
+                        <span>房型價格：</span>
+                        <span id="displayRoomPrice">NT$ 0</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>住宿天數：</span>
+                        <span id="displayNights">0 晚</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>房間數量：</span>
+                        <span id="displayQuantity">1 間</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <strong>總價：</strong>
+                        <strong class="text-primary" id="displayTotalPrice">NT$ 0</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="confirmBooking()">確認訂房</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    const accommodationId = /*[[${accommodationId}]]*/ 1;
+    let accommodationData = null;
+    let currentRating = 0;
+    let roomTypesData = [];
+    let bookingModal = null;
+
+    // 獲取 CSRF token
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+    // 創建帶 CSRF token 的 fetch 選項
+    function getFetchOptions(method = 'GET', body = null) {
+        const options = {
+            method: method,
+            headers: {}
+        };
+
+        if (csrfToken && csrfHeader) {
+            options.headers[csrfHeader] = csrfToken;
+        }
+
+        if (body) {
+            if (body instanceof FormData) {
+                options.body = body;
+            } else {
+                options.headers['Content-Type'] = 'application/json';
+                options.body = JSON.stringify(body);
+            }
+        }
+
+        return options;
+    }
+
+    // 載入住宿詳情
+    document.addEventListener('DOMContentLoaded', () => {
+        bookingModal = new bootstrap.Modal(document.getElementById('bookingModal'));
+        loadAccommodationDetail();
+        loadReviews();
+        setupStarRating();
+        checkIfFavorited(); // 檢查是否已收藏
+        setMinDate(); // 設定最小日期為今天
+    });
+
+    // 設定日期最小值為今天
+    function setMinDate() {
+        const today = new Date().toISOString().split('T')[0];
+        const checkInInput = document.getElementById('modalCheckIn');
+        const checkOutInput = document.getElementById('modalCheckOut');
+
+        checkInInput.min = today;
+        checkOutInput.min = today;
+
+        // 設定預設值為明天和後天
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const dayAfter = new Date();
+        dayAfter.setDate(dayAfter.getDate() + 2);
+
+        checkInInput.value = tomorrow.toISOString().split('T')[0];
+        checkOutInput.value = dayAfter.toISOString().split('T')[0];
+    }
+
+    // 驗證日期
+    function validateDates() {
+        const checkIn = document.getElementById('modalCheckIn').value;
+        const checkOut = document.getElementById('modalCheckOut').value;
+        const checkInInput = document.getElementById('modalCheckIn');
+        const checkOutInput = document.getElementById('modalCheckOut');
+        const checkInError = document.getElementById('checkInError');
+        const checkOutError = document.getElementById('checkOutError');
+
+        let isValid = true;
+
+        // 清除之前的錯誤
+        checkInInput.classList.remove('is-invalid');
+        checkOutInput.classList.remove('is-invalid');
+        checkInError.textContent = '';
+        checkOutError.textContent = '';
+
+        if (!checkIn) {
+            checkInInput.classList.add('is-invalid');
+            checkInError.textContent = '請選擇入住日期';
+            isValid = false;
+        }
+
+        if (!checkOut) {
+            checkOutInput.classList.add('is-invalid');
+            checkOutError.textContent = '請選擇退房日期';
+            isValid = false;
+        }
+
+        if (checkIn && checkOut) {
+            const checkInDate = new Date(checkIn);
+            const checkOutDate = new Date(checkOut);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // 檢查入住日期不能早於今天
+            if (checkInDate < today) {
+                checkInInput.classList.add('is-invalid');
+                checkInError.textContent = '入住日期不能早於今天';
+                isValid = false;
+            }
+
+            // 檢查退房日期必須晚於入住日期
+            if (checkOutDate <= checkInDate) {
+                checkOutInput.classList.add('is-invalid');
+                checkOutError.textContent = '退房日期必須晚於入住日期';
+                isValid = false;
+            }
+
+            // 自動調整：如果入住日期變更，確保退房日期至少是隔天
+            if (checkOutDate <= checkInDate) {
+                const nextDay = new Date(checkInDate);
+                nextDay.setDate(nextDay.getDate() + 1);
+                checkOutInput.value = nextDay.toISOString().split('T')[0];
+            }
+
+            // 更新退房日期的最小值為入住日期的隔天
+            if (checkIn) {
+                const minCheckOut = new Date(checkInDate);
+                minCheckOut.setDate(minCheckOut.getDate() + 1);
+                checkOutInput.min = minCheckOut.toISOString().split('T')[0];
+            }
+        }
+
+        return isValid;
+    }
+
+    // 驗證房間數量
+    function validateQuantity() {
+        const select = document.getElementById('modalRoomTypeSelect');
+        const quantityInput = document.getElementById('modalQuantity');
+        const quantityError = document.getElementById('quantityError');
+        const selectedOption = select.options[select.selectedIndex];
+
+        quantityInput.classList.remove('is-invalid');
+        quantityError.textContent = '';
+
+        if (!selectedOption.value) {
+            return true; // 還沒選擇房型，不驗證
+        }
+
+        const maxRooms = parseInt(selectedOption.dataset.totalRooms || 1);
+        const quantity = parseInt(quantityInput.value || 1);
+
+        if (quantity < 1) {
+            quantityInput.value = 1;
+            quantityInput.classList.add('is-invalid');
+            quantityError.textContent = '房間數量至少為 1';
+            return false;
+        }
+
+        if (quantity > maxRooms) {
+            quantityInput.value = maxRooms;
+            quantityInput.classList.add('is-invalid');
+            quantityError.textContent = `此房型最多只有 ${maxRooms} 間可預訂`;
+
+            // 顯示警告訊息
+            setTimeout(() => {
+                quantityInput.classList.remove('is-invalid');
+                quantityError.textContent = '';
+            }, 3000);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    function loadAccommodationDetail() {
+        fetch(`/api/accommodations/${accommodationId}`)
+            .then(r => r.json())
+            .then(data => {
+                accommodationData = data;
+                displayAccommodationDetail(data);
+                loadRoomTypes();
+            })
+            .catch(err => {
+                console.error('載入住宿詳情失敗:', err);
+                alert('載入住宿詳情失敗');
+            });
+    }
+
+    function displayAccommodationDetail(acc) {
+        // 基本資訊
+        document.getElementById('accommodationName').textContent = acc.name;
+        document.getElementById('breadcrumb-name').textContent = acc.name;
+        document.getElementById('accommodationLocation').textContent = '📍 ' + acc.location;
+        document.getElementById('accommodationDistance').textContent =
+            '🚶 距市中心 ' + (acc.distanceFromCenter || '未知') + ' 公里';
+        document.getElementById('accommodationDescription').textContent = acc.description;
+        document.getElementById('pricePerNight').textContent = acc.pricePerNight;
+
+        // 評分
+        if (acc.rating) {
+            document.getElementById('ratingBadge').textContent = '⭐ ' + acc.rating;
+            document.getElementById('ratingText').textContent =
+                `非常好（${acc.reviewCount || 0} 則評論）`;
+        } else {
+            document.getElementById('ratingBadge').textContent = '暫無評分';
+            document.getElementById('ratingText').textContent = '成為第一個評論的人';
+        }
+
+        // 圖片畫廊
+        displayImageGallery(acc);
+
+        // 設施
+        if (acc.amenities) {
+            document.getElementById('amenitiesList').innerHTML = acc.amenities
+                .split(',')
+                .map(a => `<span class="amenity-item">✓ ${a.trim()}</span>`)
+                .join('');
+        }
+
+        // 附近景點
+        if (acc.nearbyAttractions) {
+            document.getElementById('nearbyAttractionsList').innerHTML = acc.nearbyAttractions
+                .split(',')
+                .map(a => `<div class="nearby-item">📍 ${a.trim()}</div>`)
+                .join('');
+        }
+
+        // 聯絡資訊
+        document.getElementById('contactAddress').textContent = acc.address || '未提供';
+        document.getElementById('contactPhone').textContent = acc.phone || '未提供';
+    }
+
+    function displayImageGallery(acc) {
+        const gallery = document.getElementById('imageGallery');
+        const images = acc.images ? acc.images.split(',') : [];
+        const mainImage = acc.imageUrl || images[0] || 'https://picsum.photos/800/600';
+
+        let html = `<div class="main-image">
+            <img src="${mainImage}" class="gallery-image" alt="${acc.name}">
+        </div>`;
+
+        for (let i = 0; i < Math.min(4, images.length); i++) {
+            html += `<div class="side-image">
+                <img src="${images[i]}" class="gallery-image" alt="${acc.name}">
+            </div>`;
+        }
+
+        gallery.innerHTML = html;
+    }
+
+    function loadRoomTypes() {
+        fetch(`/api/accommodations/${accommodationId}/room-types`)
+            .then(r => r.json())
+            .then(data => {
+                roomTypesData = data; // 儲存房型資料供 Modal 使用
+                displayRoomTypes(data);
+            })
+            .catch(err => console.error('載入房型失敗:', err));
+    }
+
+    function displayRoomTypes(roomTypes) {
+        const container = document.getElementById('roomTypesList');
+
+        if (!roomTypes || roomTypes.length === 0) {
+            container.innerHTML = '<p class="text-muted">目前沒有可用的房型</p>';
+            return;
+        }
+
+        container.innerHTML = roomTypes.map(rt => `
+            <div class="room-type-card">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5>${rt.name}</h5>
+                        <p class="text-muted">${rt.description || ''}</p>
+                        <div class="text-primary fw-bold">
+                            NT$ ${rt.pricePerNight} / 晚
+                        </div>
+                        <small class="text-muted">剩餘房間: ${rt.totalRooms} 間</small>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-center">
+                        <button class="btn btn-primary w-100" onclick="bookRoom(${rt.id}, '${rt.name}')">
+                            立即預訂
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function loadReviews() {
+        fetch(`/api/reviews/accommodation/${accommodationId}`)
+            .then(r => r.json())
+            .then(data => displayReviews(data))
+            .catch(err => console.error('載入評論失敗:', err));
+    }
+
+    function displayReviews(reviews) {
+        const container = document.getElementById('reviewsList');
+
+        if (!reviews || reviews.length === 0) {
+            container.innerHTML = '<p class="text-muted">目前沒有評論，成為第一個評論的人吧！</p>';
+            return;
+        }
+
+        container.innerHTML = reviews.map(r => `
+            <div class="review-card">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <div class="review-rating">${'★'.repeat(Math.floor(r.rating))}${'☆'.repeat(5-Math.floor(r.rating))}</div>
+                        <div class="review-author">
+                            <strong>${r.userFullName || r.username}</strong>
+                        </div>
+                    </div>
+                    <div class="review-date">${formatDate(r.createdAt)}</div>
+                </div>
+                <p>${r.comment || ''}</p>
+                <div class="review-helpful">
+                    👍 ${r.helpfulCount || 0} 人覺得有幫助
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function setupStarRating() {
+        const stars = document.querySelectorAll('.star-rating .star');
+        stars.forEach(star => {
+            star.addEventListener('click', function() {
+                const value = parseInt(this.dataset.value);
+                currentRating = value;
+                document.getElementById('ratingValue').value = value;
+                updateStarDisplay(value);
+            });
+
+            star.addEventListener('mouseenter', function() {
+                const value = parseInt(this.dataset.value);
+                updateStarDisplay(value);
+            });
+        });
+
+        document.querySelector('.star-rating').addEventListener('mouseleave', function() {
+            updateStarDisplay(currentRating);
+        });
+    }
+
+    function updateStarDisplay(rating) {
+        const stars = document.querySelectorAll('.star-rating .star');
+        stars.forEach((star, index) => {
+            if (index < rating) {
+                star.classList.add('active');
+            } else {
+                star.classList.remove('active');
+            }
+        });
+    }
+
+    function showReviewForm() {
+        document.getElementById('addReviewForm').style.display = 'block';
+        document.getElementById('showReviewBtn').style.display = 'none';
+    }
+
+    function cancelReview() {
+        document.getElementById('addReviewForm').style.display = 'none';
+        document.getElementById('showReviewBtn').style.display = 'block';
+        document.getElementById('reviewComment').value = '';
+        currentRating = 0;
+        updateStarDisplay(0);
+    }
+
+    function submitReview() {
+        const rating = currentRating;
+        const comment = document.getElementById('reviewComment').value.trim();
+
+        if (rating === 0) {
+            alert('請選擇評分');
+            return;
+        }
+
+        if (!comment) {
+            alert('請輸入評論內容');
+            return;
+        }
+
+        fetch(`/api/reviews/accommodation/${accommodationId}?rating=${rating}&comment=${encodeURIComponent(comment)}`,
+            getFetchOptions('POST'))
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert('評論發表成功！');
+                cancelReview();
+                loadReviews();
+                loadAccommodationDetail(); // 更新評分
+            } else {
+                alert(data.message || '評論發表失敗');
+            }
+        })
+        .catch(err => {
+            console.error('發表評論失敗:', err);
+            alert('發表評論失敗，請稍後再試');
+        });
+    }
+
+    function bookRoom(roomTypeId, roomTypeName) {
+        openQuickBookingModal(roomTypeId);
+    }
+
+    // 打開快速訂房 Modal
+    function openQuickBookingModal(preselectedRoomTypeId = null) {
+        // 設定住宿資訊
+        document.getElementById('modalAccommodationName').textContent = accommodationData?.name || '';
+        document.getElementById('modalLocation').textContent = '📍 ' + (accommodationData?.location || '');
+
+        // 載入房型選項
+        const select = document.getElementById('modalRoomTypeSelect');
+        select.innerHTML = '<option value="">請選擇房型</option>';
+
+        roomTypesData.forEach(rt => {
+            const option = document.createElement('option');
+            option.value = rt.id;
+            option.textContent = `${rt.name} - NT$ ${rt.pricePerNight} / 晚 (剩餘 ${rt.totalRooms} 間)`;
+            option.dataset.price = rt.pricePerNight;
+            option.dataset.totalRooms = rt.totalRooms;  // 儲存庫存數量
+            if (preselectedRoomTypeId && rt.id === preselectedRoomTypeId) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+
+        // 重置表單
+        document.getElementById('modalQuantity').value = 1;
+        document.getElementById('modalQuantity').max = 1;
+
+        // 清除所有錯誤提示
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+
+        updateBookingPrice();
+
+        // 顯示 Modal
+        bookingModal.show();
+    }
+
+    // 更新訂房價格
+    function updateBookingPrice() {
+        const select = document.getElementById('modalRoomTypeSelect');
+        const selectedOption = select.options[select.selectedIndex];
+        const roomPrice = parseFloat(selectedOption.dataset.price || 0);
+        const totalRooms = parseInt(selectedOption.dataset.totalRooms || 1);
+
+        const quantityInput = document.getElementById('modalQuantity');
+        const roomTypeStock = document.getElementById('roomTypeStock');
+        const quantityHint = document.getElementById('quantityHint');
+
+        // 更新房型庫存提示
+        if (selectedOption.value) {
+            roomTypeStock.textContent = `此房型共有 ${totalRooms} 間可預訂`;
+            roomTypeStock.className = 'form-text text-success';
+
+            // 更新房間數量上限
+            quantityInput.max = totalRooms;
+            quantityHint.textContent = `最多可預訂 ${totalRooms} 間`;
+
+            // 如果當前數量超過庫存，自動調整
+            if (parseInt(quantityInput.value) > totalRooms) {
+                quantityInput.value = totalRooms;
+            }
+        } else {
+            roomTypeStock.textContent = '';
+            quantityInput.max = 1;
+            quantityHint.textContent = '請先選擇房型';
+        }
+
+        const checkIn = document.getElementById('modalCheckIn').value;
+        const checkOut = document.getElementById('modalCheckOut').value;
+        const quantity = parseInt(quantityInput.value) || 1;
+
+        // 計算住宿天數
+        let nights = 0;
+        if (checkIn && checkOut) {
+            const start = new Date(checkIn);
+            const end = new Date(checkOut);
+            nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+            if (nights < 0) nights = 0;
+        }
+
+        // 更新顯示
+        document.getElementById('displayRoomPrice').textContent = `NT$ ${roomPrice.toLocaleString()}`;
+        document.getElementById('displayNights').textContent = `${nights} 晚`;
+        document.getElementById('displayQuantity').textContent = `${quantity} 間`;
+
+        const totalPrice = roomPrice * nights * quantity;
+        document.getElementById('displayTotalPrice').textContent = `NT$ ${totalPrice.toLocaleString()}`;
+    }
+
+    // 確認訂房
+    function confirmBooking() {
+        const roomTypeId = document.getElementById('modalRoomTypeSelect').value;
+        const checkIn = document.getElementById('modalCheckIn').value;
+        const checkOut = document.getElementById('modalCheckOut').value;
+        const quantity = parseInt(document.getElementById('modalQuantity').value) || 1;
+        const select = document.getElementById('modalRoomTypeSelect');
+        const selectedOption = select.options[select.selectedIndex];
+        const maxRooms = parseInt(selectedOption.dataset.totalRooms || 1);
+
+        // 驗證房型
+        if (!roomTypeId) {
+            alert('❌ 請選擇房型');
+            return;
+        }
+
+        // 驗證日期
+        if (!checkIn || !checkOut) {
+            alert('❌ 請選擇入住和退房日期');
+            return;
+        }
+
+        // 驗證日期邏輯
+        if (!validateDates()) {
+            alert('❌ 請檢查日期是否正確');
+            return;
+        }
+
+        const start = new Date(checkIn);
+        const end = new Date(checkOut);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (start < today) {
+            alert('❌ 入住日期不能早於今天');
+            return;
+        }
+
+        if (end <= start) {
+            alert('❌ 退房日期必須晚於入住日期');
+            return;
+        }
+
+        // 驗證房間數量
+        if (quantity < 1) {
+            alert('❌ 房間數量至少為 1');
+            return;
+        }
+
+        if (quantity > maxRooms) {
+            alert(`❌ 此房型最多只有 ${maxRooms} 間可預訂\n您選擇了 ${quantity} 間，請調整數量`);
+            return;
+        }
+
+        // 發送訂房請求
+        const formData = new FormData();
+        formData.append('roomTypeId', roomTypeId);
+        formData.append('checkIn', checkIn);
+        formData.append('checkOut', checkOut);
+        formData.append('quantity', quantity);
+
+        fetch('/api/bookings/book-by-room-type', getFetchOptions('POST', formData))
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ 訂房成功！\n訂單編號：' + data.bookingId);
+                bookingModal.hide();
+                // 可以跳轉到訂單頁面
+                if (confirm('是否前往查看訂單？')) {
+                    window.location.href = '/user-bookings';
+                }
+            } else {
+                alert('❌ 訂房失敗：' + (data.message || '未知錯誤'));
+            }
+        })
+        .catch(err => {
+            console.error('訂房失敗:', err);
+            alert('❌ 訂房失敗，請稍後再試');
+        });
+    }
+
+    function scrollToRoomTypes() {
+        document.getElementById('roomTypesList').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function addToFavorites() {
+        fetch(`/user/favorites/api/add/${accommodationId}`, getFetchOptions('POST'))
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ 已加入收藏！');
+                // 更新按鈕樣式
+                const btn = document.getElementById('favoriteBtn');
+                btn.classList.remove('btn-outline-danger');
+                btn.classList.add('btn-danger');
+                btn.innerHTML = '💖 已收藏';
+                btn.disabled = true;
+            } else {
+                alert(data.message || '加入收藏失敗');
+            }
+        })
+        .catch(err => {
+            console.error('加入收藏失敗:', err);
+            alert('請先登入才能使用收藏功能');
+        });
+    }
+
+    // 檢查是否已收藏
+    function checkIfFavorited() {
+        fetch(`/user/favorites/api/check/${accommodationId}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.favorited) {
+                    const btn = document.getElementById('favoriteBtn');
+                    btn.classList.remove('btn-outline-danger');
+                    btn.classList.add('btn-danger');
+                    btn.innerHTML = '💖 已收藏';
+                    btn.disabled = true;
+                }
+            })
+            .catch(err => console.log('未登入或檢查收藏失敗'));
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+</script>
+
+</body>
+</html>
+

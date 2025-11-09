@@ -1,0 +1,38 @@
+# Zeabur 環境變數設定清單
+#
+# 在 Zeabur 控制台的 Environment Variables 中設定以下變數：
+# (專案 → 你的服務 → Variables)
+
+# ===== 資料庫設定 =====
+# 注意：Zeabur 添加 MySQL 服務後會自動設定這些變數
+# 如果沒有自動設定，請手動添加：
+
+DATABASE_URL=<Zeabur MySQL 連接 URL>
+DB_USERNAME=<Zeabur MySQL 用戶名>
+DB_PASSWORD=<Zeabur MySQL 密碼>
+
+# ===== 郵件設定 (必須手動設定) =====
+
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=howie960018@gmail.com
+MAIL_PASSWORD=rgsqpqcanthwqars
+MAIL_FROM=howie960018@gmail.com
+MAIL_FROM_NAME=訂房系統
+
+# ===== 應用程式設定 =====
+
+# 應用程式基礎 URL（替換成你的 Zeabur 域名）
+APP_BASE_URL=https://你的專案名稱.zeabur.app
+
+# Hibernate DDL 模式（生產環境建議使用 update）
+DDL_AUTO=update
+
+# 是否顯示 SQL（生產環境建議設為 false）
+SHOW_SQL=false
+
+# ===== 可選設定 =====
+
+# 端口（Zeabur 會自動設定，通常不需要手動設定）
+# PORT=8080
+

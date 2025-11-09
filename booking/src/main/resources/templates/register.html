@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>註冊新帳號</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container mt-5">
+    <div class="card col-md-6 offset-md-3">
+        <div class="card-body">
+            <h3 class="text-center mb-3">註冊新帳號</h3>
+            <form id="registerForm">
+                <div class="mb-3">
+                    <label class="form-label">帳號 <span class="text-danger">*</span></label>
+                    <input type="text" id="username" class="form-control" required
+                           pattern=".{3,20}" title="帳號長度需要在3到20個字元之間">
+                    <div class="form-text">帳號長度需要在3到20個字元之間</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">密碼 <span class="text-danger">*</span></label>
+                    <input type="password" id="password" class="form-control" required
+                           pattern=".{6,}" title="密碼至少需要6個字元">
+                    <div class="form-text">密碼至少需要6個字元</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">電子郵件 <span class="text-danger">*</span></label>
+                    <input type="email" id="email" class="form-control" required
+                           placeholder="example@email.com">
+                    <div class="form-text">用於忘記密碼功能</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">全名</label>
+                    <input type="text" id="fullName" class="form-control"
+                           placeholder="請輸入您的姓名">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">聯絡電話</label>
+                    <input type="tel" id="phone" class="form-control"
+                           placeholder="0912-345-678">
+                </div>
+                <button type="submit" class="btn btn-primary w-100">註冊</button>
+                <a href="/login" class="btn btn-link w-100 mt-2">返回登入</a>
+            </form>
+            <div id="msg" class="mt-3 text-center"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById("registerForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+        const email = document.getElementById("email").value;
+        const fullName = document.getElementById("fullName").value;
+        const phone = document.getElementById("phone").value;
+
+        // 表單驗證
+        if (username.length < 3 || username.length > 20) {
+            showMessage("帳號長度需要在3到20個字元之間", false);
+            return;
+        }
+        if (password.length < 6) {
+            showMessage("密碼至少需要6個字元", false);
+            return;
+        }
+        if (!email || !email.includes('@')) {
+            showMessage("請輸入有效的電子郵件", false);
+            return;
+        }
+
+        const formData = new URLSearchParams();
+        formData.append("username", username);
+        formData.append("password", password);
+        formData.append("email", email);
+        if (fullName) formData.append("fullName", fullName);
+        if (phone) formData.append("phone", phone);
+
+        try {
+            const res = await fetch("/api/auth/register", {
+                method: "POST",
+                headers: {"Content-Type": "application/x-www-form-urlencoded"},
+                body: formData
+            });
+
+            if (res.ok) {
+                showMessage("註冊成功！3秒後自動跳轉到登入頁面...", true);
+                setTimeout(() => window.location.href = "/login", 3000);
+            } else {
+                const errorData = await res.text();
+                if (res.status === 409) {
+                    showMessage("註冊失敗：此帳號已被使用", false);
+                } else {
+                    showMessage("註冊失敗：" + errorData, false);
+                }
+            }
+        } catch (error) {
+            showMessage("註冊失敗：系統錯誤，請稍後再試", false);
+        }
+    });
+
+    function showMessage(message, isSuccess) {
+        const msgDiv = document.getElementById("msg");
+        msgDiv.textContent = message;
+        msgDiv.className = `alert ${isSuccess ? 'alert-success' : 'alert-danger'} mt-3`;
+    }
+</script>
+</body>
+</html>

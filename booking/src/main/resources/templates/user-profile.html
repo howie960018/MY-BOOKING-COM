@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>個人資料 - 訂房系統</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .profile-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 30px;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 16px;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            color: #007bff;
+        }
+
+        .tab.active {
+            color: #007bff;
+            border-bottom: 3px solid #007bff;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .form-group input:disabled {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            margin-left: 10px;
+        }
+
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .info-display {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            width: 120px;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .info-value {
+            flex: 1;
+            color: #333;
+        }
+
+        .password-strength {
+            margin-top: 5px;
+            font-size: 12px;
+        }
+
+        .strength-weak { color: #dc3545; }
+        .strength-medium { color: #ffc107; }
+        .strength-strong { color: #28a745; }
+    </style>
+</head>
+<body>
+    <!-- 導航欄 -->
+    <nav style="background-color: #343a40; padding: 15px; margin-bottom: 20px;">
+        <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
+            <a href="/" style="color: white; text-decoration: none; font-size: 20px; font-weight: bold;">🏨 訂房系統</a>
+            <div style="display: flex; gap: 10px;">
+                <a href="/" style="color: white; text-decoration: none; padding: 8px 15px; background-color: #495057; border-radius: 5px;">🏠 首頁</a>
+                <a href="/user/profile" style="color: white; text-decoration: none; padding: 8px 15px; background-color: #007bff; border-radius: 5px;">👤 個人資料</a>
+                <a href="/user-bookings" style="color: white; text-decoration: none; padding: 8px 15px; background-color: #495057; border-radius: 5px;">📋 我的訂單</a>
+                <a href="/user/favorites" style="color: white; text-decoration: none; padding: 8px 15px; background-color: #495057; border-radius: 5px;">❤️ 我的收藏</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="profile-container">
+        <h1>個人資料管理</h1>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('profile')">個人資料</button>
+            <button class="tab" onclick="switchTab('password')">修改密碼</button>
+        </div>
+
+        <!-- 個人資料 Tab -->
+        <div id="profile-tab" class="tab-content active">
+            <div class="profile-card">
+                <h2>基本資料</h2>
+
+                <!-- 成功訊息 -->
+                <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+
+                <!-- 錯誤訊息 -->
+                <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+                <!-- 目前資料顯示 -->
+                <div class="info-display">
+                    <div class="info-item">
+                        <span class="info-label">帳號：</span>
+                        <span class="info-value" th:text="${user.username}">username</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">全名：</span>
+                        <span class="info-value" th:text="${user.fullName ?: '未設定'}">未設定</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Email：</span>
+                        <span class="info-value" th:text="${user.email ?: '未設定'}">未設定</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">電話：</span>
+                        <span class="info-value" th:text="${user.phone ?: '未設定'}">未設定</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">註冊時間：</span>
+                        <span class="info-value" th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm')}">2025-01-08</span>
+                    </div>
+                </div>
+
+                <!-- 更新表單 -->
+                <form th:action="@{/user/profile/update}" method="post" th:object="${profileDTO}">
+                    <div class="form-group">
+                        <label for="fullName">全名 *</label>
+                        <input type="text" id="fullName" name="fullName"
+                               th:value="${user.fullName}"
+                               placeholder="請輸入您的全名" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">電子郵件 *</label>
+                        <input type="email" id="email" name="email"
+                               th:value="${user.email}"
+                               placeholder="example@email.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">聯絡電話</label>
+                        <input type="tel" id="phone" name="phone"
+                               th:value="${user.phone}"
+                               placeholder="0912-345-678">
+                    </div>
+
+                    <div class="form-group">
+                        <label>帳號</label>
+                        <input type="text" th:value="${user.username}" disabled>
+                    </div>
+
+                    <div>
+                        <button type="submit" class="btn btn-primary">💾 儲存變更</button>
+                        <button type="reset" class="btn btn-secondary">🔄 重設</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 修改密碼 Tab -->
+        <div id="password-tab" class="tab-content">
+            <div class="profile-card">
+                <h2>修改密碼</h2>
+
+                <!-- 成功訊息 -->
+                <div th:if="${passwordSuccess}" class="alert alert-success" th:text="${passwordSuccess}"></div>
+
+                <!-- 錯誤訊息 -->
+                <div th:if="${passwordError}" class="alert alert-error" th:text="${passwordError}"></div>
+
+                <form th:action="@{/user/password/update}" method="post" th:object="${passwordDTO}"
+                      onsubmit="return validatePassword()">
+
+                    <div class="form-group">
+                        <label for="oldPassword">目前密碼 *</label>
+                        <input type="password" id="oldPassword" name="oldPassword"
+                               placeholder="請輸入目前的密碼" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newPassword">新密碼 *</label>
+                        <input type="password" id="newPassword" name="newPassword"
+                               placeholder="至少 6 個字元"
+                               minlength="6"
+                               oninput="checkPasswordStrength()" required>
+                        <div id="password-strength" class="password-strength"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">確認新密碼 *</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword"
+                               placeholder="再次輸入新密碼" required>
+                        <small id="password-match" style="display: none;"></small>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <button type="submit" class="btn btn-primary">🔒 更新密碼</button>
+                        <button type="reset" class="btn btn-secondary">🔄 重設</button>
+                    </div>
+                </form>
+
+                <div style="margin-top: 30px; padding: 15px; background-color: #fff3cd; border-radius: 5px;">
+                    <h4 style="margin-top: 0; color: #856404;">⚠️ 密碼安全建議</h4>
+                    <ul style="color: #856404; margin-bottom: 0;">
+                        <li>密碼長度至少 6 個字元</li>
+                        <li>建議使用大小寫字母、數字和特殊符號組合</li>
+                        <li>不要使用過於簡單或常見的密碼</li>
+                        <li>定期更換密碼以保障帳號安全</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab 切換功能
+        function switchTab(tabName) {
+            // 隱藏所有 tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // 移除所有 tab 的 active class
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // 顯示選中的 tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // 密碼強度檢查
+        function checkPasswordStrength() {
+            const password = document.getElementById('newPassword').value;
+            const strengthDiv = document.getElementById('password-strength');
+
+            if (password.length === 0) {
+                strengthDiv.textContent = '';
+                return;
+            }
+
+            let strength = 0;
+            if (password.length >= 6) strength++;
+            if (password.length >= 10) strength++;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+            if (/\d/.test(password)) strength++;
+            if (/[^a-zA-Z0-9]/.test(password)) strength++;
+
+            if (strength <= 2) {
+                strengthDiv.textContent = '⚠️ 密碼強度：弱';
+                strengthDiv.className = 'password-strength strength-weak';
+            } else if (strength <= 3) {
+                strengthDiv.textContent = '✓ 密碼強度：中';
+                strengthDiv.className = 'password-strength strength-medium';
+            } else {
+                strengthDiv.textContent = '✓ 密碼強度：強';
+                strengthDiv.className = 'password-strength strength-strong';
+            }
+        }
+
+        // 密碼驗證
+        function validatePassword() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const matchDiv = document.getElementById('password-match');
+
+            if (newPassword !== confirmPassword) {
+                matchDiv.textContent = '❌ 兩次輸入的密碼不一致';
+                matchDiv.style.color = '#dc3545';
+                matchDiv.style.display = 'block';
+                return false;
+            }
+
+            if (newPassword.length < 6) {
+                alert('新密碼長度至少需要 6 個字元');
+                return false;
+            }
+
+            return true;
+        }
+
+        // 即時檢查密碼是否一致
+        document.getElementById('confirmPassword')?.addEventListener('input', function() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = this.value;
+            const matchDiv = document.getElementById('password-match');
+
+            if (confirmPassword.length === 0) {
+                matchDiv.style.display = 'none';
+                return;
+            }
+
+            if (newPassword === confirmPassword) {
+                matchDiv.textContent = '✓ 密碼一致';
+                matchDiv.style.color = '#28a745';
+                matchDiv.style.display = 'block';
+            } else {
+                matchDiv.textContent = '❌ 密碼不一致';
+                matchDiv.style.color = '#dc3545';
+                matchDiv.style.display = 'block';
+            }
+        });
+
+        // 自動隱藏成功訊息
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert-success');
+            alerts.forEach(alert => {
+                alert.style.transition = 'opacity 0.5s';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 3000);
+    </script>
+</body>
+</html>
+

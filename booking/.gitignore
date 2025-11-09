@@ -1,0 +1,81 @@
+# Compiled class files
+*.class
+
+# Log files
+*.log
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Database files
+data/
+*.mv.db
+*.trace.db
+*.lock.db
+
+# ===== IMPORTANT: Sensitive Configuration Files =====
+# 敏感資訊文件 - 絕對不要上傳到 GitHub
+
+# 本地開發配置（包含真實密碼）
+application-local.properties
+application-dev.properties
+
+# 環境變數文件
+.env
+.env.local
+
+# ===== 可以上傳的配置文件 =====
+# application.properties - 使用環境變數，可以上傳
+# application.properties.example - 範本文件，可以上傳
+# application.properties.zeabur - Zeabur 配置範本，可以上傳
+# !application.properties
+# !application.properties.example
+# !application.properties.zeabur
+
+# Application specific
+logs/
+temp/
+uploads/
+

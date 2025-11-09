@@ -1,0 +1,73 @@
+# ===== Database (MySQL) =====
+# 使用環境變數，部署到 Zeabur 時會自動讀取，本地開發使用預設值
+spring.datasource.url=${DATABASE_URL:jdbc:mysql://localhost:3306/booking_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Taipei}
+spring.datasource.username=${DB_USERNAME:root}
+spring.datasource.password=${DB_PASSWORD:2FTA93108}
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA/Hibernate 設定
+# DDL_AUTO: create-drop (開發), update (生產), validate (嚴格生產)
+spring.jpa.hibernate.ddl-auto=${DDL_AUTO:create-drop}
+spring.jpa.show-sql=${SHOW_SQL:true}
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+
+# ===== Data Initialization =====
+# 自動執行 data.sql 初始化腳本
+spring.sql.init.mode=always
+# 延遲到 Hibernate 初始化後再執行
+spring.jpa.defer-datasource-initialization=true
+
+# ===== Thymeleaf & others =====
+spring.thymeleaf.cache=false
+spring.jackson.serialization.fail-on-empty-beans=false
+spring.jpa.properties.hibernate.enable_lazy_load_no_trans=true
+
+# ===== Server Encoding Configuration =====
+server.servlet.encoding.charset=UTF-8
+server.servlet.encoding.enabled=true
+server.servlet.encoding.force=true
+
+# ===== Server Port =====
+# Zeabur 會自動設定 PORT 環境變數
+server.port=${PORT:8080}
+
+# ===== Spring Mail Configuration =====
+# Gmail SMTP 設定 - 使用環境變數
+spring.mail.host=${MAIL_HOST:smtp.gmail.com}
+spring.mail.port=${MAIL_PORT:587}
+spring.mail.username=${MAIL_USERNAME:howie960018@gmail.com}
+spring.mail.password=${MAIL_PASSWORD:rgsqpqcanthwqars}
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+spring.mail.properties.mail.smtp.starttls.required=true
+spring.mail.properties.mail.smtp.connectiontimeout=5000
+spring.mail.properties.mail.smtp.timeout=5000
+spring.mail.properties.mail.smtp.writetimeout=5000
+
+# 寄件者資訊設定
+app.mail.from=${MAIL_FROM:howie960018@gmail.com}
+app.mail.from-name=${MAIL_FROM_NAME:Booking Service}
+
+# 應用程式基礎 URL - 在 Zeabur 上需要設定為實際域名
+app.base-url=${APP_BASE_URL:http://localhost:8080}
+
+# ===== Swagger / OpenAPI Configuration =====
+# Swagger UI 路徑
+springdoc.swagger-ui.path=/swagger-ui.html
+# API 文件路徑
+springdoc.api-docs.path=/v3/api-docs
+# 依照標籤名稱 tags 排序
+springdoc.swagger-ui.tags-sorter=alpha
+# API 操作依字母排序
+springdoc.swagger-ui.operations-sorter=alpha
+# 啟用 Try it out 功能
+springdoc.swagger-ui.try-it-out-enabled=true
+# 顯示請求執行時間
+springdoc.swagger-ui.display-request-duration=true
+# 模型展開深度設定
+springdoc.swagger-ui.default-models-expand-depth=2
+# 預設不展開文件
+springdoc.swagger-ui.doc-expansion=none
+# 顯示擴展欄位
+springdoc.swagger-ui.show-extensions=true
+

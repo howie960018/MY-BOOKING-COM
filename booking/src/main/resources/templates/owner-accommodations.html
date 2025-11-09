@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-TW">
+<head>
+    <title>房東住宿管理 - 訂房系統</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .accommodation-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .accommodation-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .accommodation-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>房東住宿管理</h1>
+        <nav>
+            <a href="/owner-dashboard">返回儀表板</a>
+            <a href="/owner-bookings">管理訂單</a>
+            <form action="/logout" method="POST" style="display: inline;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="logout-btn" style="background: none; border: none; color: white; cursor: pointer; padding: 0.5rem 1rem;">登出</button>
+            </form>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="accommodation-form">
+            <h2>新增住宿</h2>
+            <form id="newAccommodationForm">
+                <div class="form-group">
+                    <label for="name">名稱 <span style="color: red;">*</span></label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="location">地點 <span style="color: red;">*</span></label>
+                    <input type="text" id="location" name="location" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">描述 <span style="color: red;">*</span></label>
+                    <textarea id="description" name="description" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="pricePerNight">每晚價格 <span style="color: red;">*</span></label>
+                    <input type="number" id="pricePerNight" name="pricePerNight" required min="0">
+                </div>
+
+                <!-- 新增圖片 URL 欄位 -->
+                <div class="form-group">
+                    <label for="imageUrl">🖼️ 圖片 URL <span style="color: red;">*</span></label>
+                    <input type="url" id="imageUrl" name="imageUrl"
+                           placeholder="https://example.com/image.jpg" required>
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        請輸入完整的圖片網址（建議使用
+                        <a href="https://imgur.com/upload" target="_blank">Imgur</a> |
+                        <a href="https://imgbb.com" target="_blank">ImgBB</a> 等圖床）
+                    </small>
+
+                    <!-- 即時預覽 -->
+                    <div id="imagePreview" style="display: none; margin-top: 10px;">
+                        <img src="" alt="圖片預覽" style="max-width: 100%; max-height: 200px; border: 1px solid #ddd; border-radius: 5px;">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">新增</button>
+            </form>
+        </section>
+
+        <section class="accommodation-list">
+            <!-- 這裡將由JavaScript動態載入住宿列表 -->
+        </section>
+    </main>
+
+    <div id="editModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:100; justify-content:center; align-items:center;">
+        <div style="background:white; padding:20px; border-radius:8px; width:500px; max-height: 90vh; overflow-y: auto;">
+            <h2>編輯住宿</h2>
+            <form id="editAccommodationForm">
+                <input type="hidden" id="editAccommodationId">
+                <div class="form-group">
+                    <label for="editName">名稱 <span style="color: red;">*</span></label>
+                    <input type="text" id="editName" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="editLocation">地點 <span style="color: red;">*</span></label>
+                    <input type="text" id="editLocation" name="location" required>
+                </div>
+                <div class="form-group">
+                    <label for="editDescription">描述 <span style="color: red;">*</span></label>
+                    <textarea id="editDescription" name="description" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editPricePerNight">每晚價格 <span style="color: red;">*</span></label>
+                    <input type="number" id="editPricePerNight" name="pricePerNight" required min="0">
+                </div>
+
+                <!-- 圖片 URL 欄位 -->
+                <div class="form-group">
+                    <label for="editImageUrl">🖼️ 圖片 URL <span style="color: red;">*</span></label>
+                    <input type="url" id="editImageUrl" name="imageUrl"
+                           placeholder="https://example.com/image.jpg" required>
+
+                    <!-- 當前圖片預覽 -->
+                    <div style="margin-top: 10px;">
+                        <label style="font-size: 12px; color: #666;">當前圖片:</label>
+                        <img id="editCurrentImage" src="" alt="當前圖片"
+                             style="max-width: 100%; max-height: 150px; border: 1px solid #ddd; border-radius: 5px; display: block;">
+                    </div>
+
+                    <!-- 新圖片預覽 -->
+                    <div id="editImagePreview" style="display: none; margin-top: 10px;">
+                        <label style="font-size: 12px; color: #666;">新圖片預覽:</label>
+                        <img src="" alt="新圖片預覽"
+                             style="max-width: 100%; max-height: 150px; border: 1px solid #ddd; border-radius: 5px; display: block;">
+                    </div>
+                </div>
+
+                <div style="margin-top:20px;">
+                    <button type="submit" class="btn btn-primary">儲存變更</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        /* 確保 Modal 內的 form-group 樣式正確 */
+        #editModal .form-group { margin-bottom: 15px; }
+        #editModal .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        #editModal .form-group input, #editModal .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+    </style>
+
+    <script>
+        // 載入房東的住宿列表
+        async function loadAccommodations() {
+            try {
+                const response = await fetch('/api/owner/accommodations');
+                if (!response.ok) throw new Error('載入失敗');
+                const accommodations = await response.json();
+
+                const listSection = document.querySelector('.accommodation-list');
+                listSection.innerHTML = accommodations.map(acc => `
+                    <div class="accommodation-card" data-id="${acc.id}">
+                        <img src="${acc.imageUrl || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400'}"
+                             alt="${acc.name}"
+                             style="width: 100%; height: 150px; object-fit: cover; border-radius: 5px; margin-bottom: 10px;"
+                             onerror="this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400'">
+                        <h3>${acc.name}</h3>
+                        <p>地點：${acc.location}</p>
+                        <p>描述：${acc.description}</p>
+                        <p>價格：NT$${acc.pricePerNight} /晚</p>
+                        <div class="actions">
+                            <button class="btn btn-secondary" onclick="openEditModal(${acc.id}, '/api/owner/accommodations')">編輯</button>
+                            <button class="btn btn-danger" onclick="deleteAccommodation(${acc.id})">刪除</button>
+                            <button class="btn btn-primary" onclick="manageRoomTypes(${acc.id})">管理房型</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                alert('載入住宿資料失敗：' + error.message);
+            }
+        }
+
+        // 新增住宿
+        document.getElementById('newAccommodationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const imageUrl = document.getElementById('imageUrl').value.trim();
+
+            // 驗證圖片 URL
+            if (!isValidUrl(imageUrl)) {
+                alert('❌ 請輸入有效的圖片網址（需以 http:// 或 https:// 開頭）');
+                return;
+            }
+
+            try {
+                const formData = {
+                    name: document.getElementById('name').value,
+                    location: document.getElementById('location').value,
+                    description: document.getElementById('description').value,
+                    pricePerNight: document.getElementById('pricePerNight').value,
+                    imageUrl: imageUrl
+                };
+
+                const response = await fetch('/api/owner/accommodations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) throw new Error('新增失敗');
+
+                alert('✅ 新增成功！');
+                e.target.reset();
+                document.getElementById('imagePreview').style.display = 'none';
+                loadAccommodations();
+            } catch (error) {
+                alert('❌ 新增失敗：' + error.message);
+            }
+        });
+
+        // 刪除住宿
+        async function deleteAccommodation(id) {
+            if (!confirm('確定要刪除此住宿嗎？')) return;
+
+            try {
+                const response = await fetch(`/api/owner/accommodations/${id}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) throw new Error('刪除失敗');
+
+                alert('刪除成功！');
+                loadAccommodations();
+            } catch (error) {
+                alert('刪除失敗：' + error.message);
+            }
+        }
+
+        // 管理房型
+        function manageRoomTypes(id) {
+            window.location.href = `/room-type-management?id=${id}`;
+        }
+
+        // 顯示 Modal
+        function showEditModal() {
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        // 關閉 Modal
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            document.getElementById('editAccommodationForm').reset();
+        }
+
+        // 1. 打開編輯 Modal 並載入資料
+        async function openEditModal(id, apiPrefix) {
+            try {
+                // 使用公用的 GET API 來獲取資料
+                const response = await fetch(`/api/accommodations/${id}`);
+
+                if (!response.ok) throw new Error('載入住宿資料失敗');
+
+                const acc = await response.json();
+
+                // 填充 Modal 表單
+                document.getElementById('editAccommodationId').value = acc.id;
+                document.getElementById('editName').value = acc.name;
+                document.getElementById('editLocation').value = acc.location;
+                document.getElementById('editDescription').value = acc.description;
+                document.getElementById('editPricePerNight').value = acc.pricePerNight;
+                document.getElementById('editImageUrl').value = acc.imageUrl || '';
+
+                // 顯示當前圖片
+                const currentImage = document.getElementById('editCurrentImage');
+                currentImage.src = acc.imageUrl || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400';
+
+                // 隱藏新圖片預覽
+                document.getElementById('editImagePreview').style.display = 'none';
+
+                // 綁定編輯圖片 URL 的即時預覽
+                const editImageUrlInput = document.getElementById('editImageUrl');
+                const editImagePreview = document.getElementById('editImagePreview');
+                const editPreviewImg = editImagePreview.querySelector('img');
+
+                // 移除舊的事件監聽器（如果有）
+                const newInput = editImageUrlInput.cloneNode(true);
+                editImageUrlInput.parentNode.replaceChild(newInput, editImageUrlInput);
+
+                // 添加新的事件監聽器
+                document.getElementById('editImageUrl').addEventListener('input', function() {
+                    const url = this.value.trim();
+
+                    if (url && isValidUrl(url) && url !== acc.imageUrl) {
+                        editPreviewImg.src = url;
+                        editPreviewImg.onerror = function() {
+                            editImagePreview.style.display = 'none';
+                        };
+                        editPreviewImg.onload = function() {
+                            editImagePreview.style.display = 'block';
+                        };
+                    } else {
+                        editImagePreview.style.display = 'none';
+                    }
+                });
+
+                // 動態設定表單提交事件，傳入 API 路徑
+                document.getElementById('editAccommodationForm').onsubmit = (e) => {
+                    e.preventDefault();
+                    handleEditSubmit(apiPrefix);
+                };
+
+                showEditModal();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        // 2. 處理編輯表單提交
+        async function handleEditSubmit(apiPrefix) {
+            const id = document.getElementById('editAccommodationId').value;
+            const imageUrl = document.getElementById('editImageUrl').value.trim();
+
+            // 驗證圖片 URL
+            if (!isValidUrl(imageUrl)) {
+                alert('❌ 請輸入有效的圖片網址（需以 http:// 或 https:// 開頭）');
+                return;
+            }
+
+            try {
+                const formData = {
+                    name: document.getElementById('editName').value,
+                    location: document.getElementById('editLocation').value,
+                    description: document.getElementById('editDescription').value,
+                    pricePerNight: document.getElementById('editPricePerNight').value,
+                    imageUrl: imageUrl
+                };
+
+                // 使用傳入的 apiPrefix ( /api/owner/accommodations )
+                const response = await fetch(`${apiPrefix}/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) throw new Error('更新失敗');
+
+                alert('✅ 更新成功！');
+                closeEditModal();
+                loadAccommodations(); // 重新載入列表
+            } catch (error) {
+                alert('❌ 更新失敗：' + error.message);
+            }
+        }
+
+        // 頁面載入時載入住宿列表
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAccommodations();
+
+            // 圖片 URL 即時預覽
+            const imageUrlInput = document.getElementById('imageUrl');
+            const imagePreview = document.getElementById('imagePreview');
+            const previewImg = imagePreview.querySelector('img');
+
+            imageUrlInput.addEventListener('input', function() {
+                const url = this.value.trim();
+
+                if (url && isValidUrl(url)) {
+                    previewImg.src = url;
+                    previewImg.onerror = function() {
+                        imagePreview.style.display = 'none';
+                        alert('圖片載入失敗，請檢查網址是否正確');
+                    };
+                    previewImg.onload = function() {
+                        imagePreview.style.display = 'block';
+                    };
+                } else {
+                    imagePreview.style.display = 'none';
+                }
+            });
+        });
+
+        // URL 驗證函數
+        function isValidUrl(string) {
+            try {
+                const url = new URL(string);
+                return url.protocol === "http:" || url.protocol === "https:";
+            } catch (_) {
+                return false;
+            }
+        }
+    </script>
+</body>
+</html>
