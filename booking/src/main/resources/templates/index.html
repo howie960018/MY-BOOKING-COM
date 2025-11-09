@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="zh-TW">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -103,23 +105,23 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <!-- 未登入時顯示 -->
-                <li class="nav-item" th:if="${#authorization.expression('!isAuthenticated()')}">
+                <li class="nav-item" sec:authorize="!isAuthenticated()">
                     <a class="nav-link" href="/register">📝 註冊</a>
                 </li>
-                <li class="nav-item" th:if="${#authorization.expression('!isAuthenticated()')}">
+                <li class="nav-item" sec:authorize="!isAuthenticated()">
                     <a class="btn btn-primary btn-sm ms-2" href="/login">🔐 登入</a>
                 </li>
 
                 <!-- 登入後顯示（一般用戶）-->
-                <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()') && #authorization.expression('hasRole(''USER'')')}">
+                <li class="nav-item" sec:authorize="hasRole('USER')">
                     <a class="nav-link" href="/user/favorites">❤️ 我的收藏</a>
                 </li>
-                <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()') && #authorization.expression('hasRole(''USER'')')}">
+                <li class="nav-item" sec:authorize="hasRole('USER')">
                     <a class="nav-link" href="/user-bookings">📋 我的訂單</a>
                 </li>
-                <li class="nav-item dropdown" th:if="${#authorization.expression('isAuthenticated()') && #authorization.expression('hasRole(''USER'')')}">
+                <li class="nav-item dropdown" sec:authorize="hasRole('USER')">
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                        👤 <span th:text="${#authentication.name}">用戶</span>
+                        👤 <span sec:authentication="name">用戶</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="/user/profile">個人資料</a></li>
@@ -133,12 +135,12 @@
                 </li>
 
                 <!-- 登入後顯示（房東）-->
-                <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()') && #authorization.expression('hasRole(''OWNER'')')}">
+                <li class="nav-item" sec:authorize="hasRole('OWNER')">
                     <a class="nav-link" href="/owner-dashboard">🏠 管理面板</a>
                 </li>
-                <li class="nav-item dropdown" th:if="${#authorization.expression('isAuthenticated()') && #authorization.expression('hasRole(''OWNER'')')}">
+                <li class="nav-item dropdown" sec:authorize="hasRole('OWNER')">
                     <a class="nav-link dropdown-toggle" href="#" id="ownerDropdown" role="button" data-bs-toggle="dropdown">
-                        👤 <span th:text="${#authentication.name}">房東</span>
+                        👤 <span sec:authentication="name">房東</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="/owner-accommodations">我的住宿</a></li>
@@ -153,12 +155,12 @@
                 </li>
 
                 <!-- 登入後顯示（管理員）-->
-                <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()') && #authorization.expression('hasRole(''ADMIN'')')}">
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
                     <a class="nav-link" href="/admin-dashboard">⚙️ 管理面板</a>
                 </li>
-                <li class="nav-item dropdown" th:if="${#authorization.expression('isAuthenticated()') && #authorization.expression('hasRole(''ADMIN'')')}">
+                <li class="nav-item dropdown" sec:authorize="hasRole('ADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
-                        👤 <span th:text="${#authentication.name}">管理員</span>
+                        👤 <span sec:authentication="name">管理員</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="/admin-users">用戶管理</a></li>
@@ -387,11 +389,12 @@
 
     /**
      * 檢查用戶是否已登入
-     * Thymeleaf 會在渲染時注入登入狀態
+     * 透過檢查導覽列是否有登入按鈕來判斷
      */
     const isUserLoggedIn = () => {
-        // 使用 Thymeleaf 注入的變數
-        return /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
+        // 檢查導覽列是否有「登入」按鈕，沒有表示已登入
+        const loginBtn = document.querySelector('a[href="/login"]');
+        return !loginBtn;
     };
 
     // 創建帶 CSRF token 的 fetch 選項
