@@ -1,459 +1,289 @@
-# 🚀 Zeabur 部署指南
+# ☁️ Zeabur 部署指南
 
-本指南將教你如何將訂房系統部署到 Zeabur，並正確管理敏感資訊。
-
----
-
-## 📋 部署流程概覽
-
-```
-GitHub (公開代碼，無敏感資訊)
-    ↓
-Zeabur (從 GitHub 自動部署)
-    ↓
-環境變數 (在 Zeabur 控制台設定敏感資訊)
-    ↓
-應用程式 (讀取環境變數)
-```
+本指南將幫助你將訂房系統部署到 Zeabur 雲端平台。
 
 ---
 
-## 🔧 步驟一：修改 application.properties 使用環境變數
+## 📋 前置需求
 
-我們需要修改配置文件，讓它能從環境變數讀取敏感資訊。
-
-### 當前問題
-```properties
-# ❌ 硬編碼的敏感資訊（不能上傳到 GitHub）
-spring.datasource.password=2FTA93108
-spring.mail.password=rgsqpqcanthwqars
-```
-
-### 解決方案
-```properties
-# ✅ 從環境變數讀取（可以安全上傳到 GitHub）
-spring.datasource.password=${DB_PASSWORD:default_password}
-spring.mail.password=${MAIL_PASSWORD:default_password}
-```
-
-**語法說明：**
-- `${環境變數名稱:預設值}`
-- 如果環境變數存在，使用環境變數的值
-- 如果不存在，使用預設值（用於本地開發）
+- GitHub 帳號
+- Zeabur 帳號（使用 GitHub 登入）
+- Gmail 帳號（用於發送郵件）
 
 ---
 
-## 📝 步驟二：創建可上傳的 application.properties
+## 🚀 部署步驟
 
-創建一個使用環境變數的配置文件：
+### 1. 準備 GitHub 倉庫
 
-**文件：** `src/main/resources/application.properties`
+確保你的代碼已推送到 GitHub：
 
-```properties
-# ===== Database Configuration =====
-# Zeabur 會自動提供 MySQL 連接資訊
-spring.datasource.url=${DATABASE_URL:jdbc:mysql://localhost:3306/booking_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Taipei}
-spring.datasource.username=${DB_USERNAME:root}
-spring.datasource.password=${DB_PASSWORD:password}
-spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
-
-# JPA/Hibernate
-spring.jpa.hibernate.ddl-auto=${DDL_AUTO:update}
-spring.jpa.show-sql=${SHOW_SQL:false}
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
-
-# Data Initialization
-spring.sql.init.mode=always
-spring.jpa.defer-datasource-initialization=true
-
-# ===== Thymeleaf =====
-spring.thymeleaf.cache=false
-spring.jackson.serialization.fail-on-empty-beans=false
-spring.jpa.properties.hibernate.enable_lazy_load_no_trans=true
-
-# ===== Server Encoding =====
-server.servlet.encoding.charset=UTF-8
-server.servlet.encoding.enabled=true
-server.servlet.encoding.force=true
-
-# ===== Server Port =====
-server.port=${PORT:8080}
-
-# ===== Spring Mail Configuration =====
-spring.mail.host=${MAIL_HOST:smtp.gmail.com}
-spring.mail.port=${MAIL_PORT:587}
-spring.mail.username=${MAIL_USERNAME:your_email@gmail.com}
-spring.mail.password=${MAIL_PASSWORD:your_app_password}
-spring.mail.properties.mail.smtp.auth=true
-spring.mail.properties.mail.smtp.starttls.enable=true
-spring.mail.properties.mail.smtp.starttls.required=true
-spring.mail.properties.mail.smtp.connectiontimeout=5000
-spring.mail.properties.mail.smtp.timeout=5000
-spring.mail.properties.mail.smtp.writetimeout=5000
-
-# Mail From
-app.mail.from=${MAIL_FROM:${MAIL_USERNAME}}
-app.mail.from-name=${MAIL_FROM_NAME:Booking Service}
-
-# Application Base URL
-app.base-url=${APP_BASE_URL:http://localhost:8080}
-
-# ===== Swagger Configuration =====
-springdoc.swagger-ui.path=/swagger-ui.html
-springdoc.api-docs.path=/v3/api-docs
-springdoc.swagger-ui.tags-sorter=alpha
-springdoc.swagger-ui.operations-sorter=alpha
-springdoc.swagger-ui.try-it-out-enabled=true
-springdoc.swagger-ui.display-request-duration=true
-springdoc.swagger-ui.default-models-expand-depth=2
-springdoc.swagger-ui.doc-expansion=none
-springdoc.swagger-ui.show-extensions=true
+```bash
+git add .
+git commit -m "準備部署"
+git push
 ```
-
-**說明：**
-- ✅ 這個文件**可以安全上傳到 GitHub**
-- ✅ 包含預設值，本地開發時可以直接使用
-- ✅ 部署到 Zeabur 時，會自動讀取環境變數
 
 ---
 
-## 🌐 步驟三：在 Zeabur 設定環境變數
+### 2. 登入 Zeabur
 
-### 1. 登入 Zeabur
-
-訪問：https://zeabur.com
-
-### 2. 創建新專案
-
-1. 點擊 "Create Project"
-2. 選擇 "Deploy from GitHub"
+1. 訪問：https://zeabur.com
+2. 點擊 "Sign in with GitHub"
 3. 授權 Zeabur 訪問你的 GitHub
-4. 選擇 `booking-system` 倉庫
 
-### 3. 添加 MySQL 服務
+---
 
-Zeabur 會自動偵測到你需要 MySQL，或者手動添加：
+### 3. 創建專案
 
-1. 在專案中點擊 "Add Service"
-2. 選擇 "MySQL"
-3. Zeabur 會自動創建並配置 MySQL
+1. 點擊 "**Create Project**"
+2. 輸入專案名稱（例如：`booking-system`）
+3. 選擇地區（建議：Hong Kong）
+4. 點擊 "Create"
 
-### 4. 設定環境變數
+---
 
-在你的應用程式服務中，點擊 "Environment Variables"，添加以下變數：
+### 4. 添加 MySQL 服務
 
-#### 資料庫環境變數（如果 Zeabur 沒有自動設定）
+1. 在專案中點擊 "**Add Service**"
+2. 選擇 "**Prebuilt**"
+3. 選擇 "**MySQL**"
+4. 等待 MySQL 服務啟動（約 1 分鐘）
+
+---
+
+### 5. 部署應用程式
+
+1. 點擊 "**Add Service**"
+2. 選擇 "**Deploy from GitHub**"
+3. 選擇你的倉庫：`MY-BOOKING-COM`
+4. 選擇分支：`main`
+5. Zeabur 會自動檢測 `pom.xml` 並使用 Java 構建
+6. 等待部署完成（約 2-3 分鐘）
+
+---
+
+### 6. 配置環境變數
+
+在應用程式服務頁面，點擊 "**Variables**" 標籤：
+
+#### 📌 必要的環境變數
 
 ```bash
-# Zeabur 通常會自動設定這些，如果沒有，手動添加：
-DATABASE_URL=<Zeabur 提供的 MySQL URL>
-DB_USERNAME=<Zeabur 提供的用戶名>
-DB_PASSWORD=<Zeabur 提供的密碼>
-```
+# === 資料庫配置 ===
+# Zeabur MySQL 會自動提供這些變數，直接引用即可
+DATABASE_URL=${MYSQL_URL}
+DB_USERNAME=${MYSQL_USERNAME}  
+DB_PASSWORD=${MYSQL_PASSWORD}
 
-#### 郵件環境變數（必須手動設定）
+# === 郵件配置 ===
+# 需要手動添加 Gmail 設定
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-gmail-app-password
 
-```bash
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USERNAME=howie960018@gmail.com
-MAIL_PASSWORD=rgsqpqcanthwqars
-MAIL_FROM=howie960018@gmail.com
-MAIL_FROM_NAME=訂房系統
-```
-
-#### 應用程式環境變數
-
-```bash
-# 生產環境設定
+# === 應用程式配置 ===
+# 替換為你的實際 Zeabur 網址
+APP_BASE_URL=https://your-project.zeabur.app
 DDL_AUTO=update
 SHOW_SQL=false
-APP_BASE_URL=https://你的專案名稱.zeabur.app
 ```
 
-### 5. 重新部署
+#### 如何添加變數
 
-設定完環境變數後，點擊 "Redeploy" 重新部署應用程式。
+1. 點擊 "**Add Variable**"
+2. 輸入 **Name**（變數名稱）
+3. 輸入 **Value**（變數值）
+4. 點擊 "**Save**"
+5. 重複以上步驟添加所有變數
 
 ---
 
-## 📂 步驟四：更新 .gitignore
+### 7. 取得 Gmail 應用程式密碼
 
-確保 `.gitignore` 正確配置：
+#### 步驟
 
-```gitignore
-# Compiled class files
-*.class
+1. **啟用兩步驟驗證**
+   - 訪問：https://myaccount.google.com/security
+   - 啟用「兩步驟驗證」
 
-# Log files
-*.log
+2. **產生應用程式密碼**
+   - 搜尋「應用程式密碼」
+   - 選擇「郵件」→「其他裝置」
+   - 輸入名稱：「訂房系統」
+   - 點擊「產生」
 
-# Package Files
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# Maven
-target/
-
-# Database files
-data/
-*.mv.db
-*.trace.db
-*.lock.db
-
-# IDE
-.idea/
-.vscode/
-*.iml
-
-# OS
-.DS_Store
-Thumbs.db
-
-# ===== 本地環境配置 =====
-# 如果你想保留一個本地專用的配置文件，可以這樣命名並忽略：
-application-local.properties
-.env
-.env.local
-```
+3. **複製密碼**
+   - 複製 16 位密碼（例如：`abcd efgh ijkl mnop`）
+   - 在 `MAIL_PASSWORD` 中使用此密碼
 
 ---
 
-## 🔄 步驟五：本地開發配置
+### 8. 重新部署
 
-為了方便本地開發，你有兩個選擇：
+添加環境變數後：
 
-### 選項 A：使用本地配置文件（推薦）
-
-創建 `application-local.properties`（這個文件不會上傳到 GitHub）：
-
-```properties
-# 本地開發配置
-spring.datasource.url=jdbc:mysql://localhost:3306/booking_db?useSSL=false
-spring.datasource.username=root
-spring.datasource.password=2FTA93108
-
-spring.mail.username=howie960018@gmail.com
-spring.mail.password=rgsqpqcanthwqars
-app.mail.from=howie960018@gmail.com
-```
-
-啟動時指定使用本地配置：
-
-```bash
-mvn spring-boot:run -Dspring-boot.run.profiles=local
-```
-
-### 選項 B：使用環境變數（進階）
-
-在本地設定環境變數：
-
-**Windows (PowerShell):**
-```powershell
-$env:DB_PASSWORD="2FTA93108"
-$env:MAIL_USERNAME="howie960018@gmail.com"
-$env:MAIL_PASSWORD="rgsqpqcanthwqars"
-mvn spring-boot:run
-```
-
-**Windows (CMD):**
-```cmd
-set DB_PASSWORD=2FTA93108
-set MAIL_USERNAME=howie960018@gmail.com
-set MAIL_PASSWORD=rgsqpqcanthwqars
-mvn spring-boot:run
-```
+1. 點擊 "**Redeploy**" 按鈕
+2. 等待部署完成（約 2 分鐘）
 
 ---
 
-## 🎯 步驟六：部署到 Zeabur
+### 9. 訪問應用程式
 
-### 1. 推送代碼到 GitHub
-
-```bash
-cd C:\my-booking-app-practice
-
-# 初始化 Git（如果尚未初始化）
-git init
-
-# 添加文件
-git add .
-
-# 提交
-git commit -m "配置環境變數，準備部署到 Zeabur"
-
-# 連接到 GitHub
-git remote add origin https://github.com/你的用戶名/booking-system.git
-git push -u origin main
-```
-
-### 2. 在 Zeabur 控制台操作
-
-1. **創建專案**：點擊 "Create Project"
-2. **連接 GitHub**：選擇你的倉庫
-3. **添加 MySQL**：Zeabur 會自動建議添加
-4. **設定環境變數**：添加郵件相關的環境變數
-5. **部署**：Zeabur 會自動開始部署
-
-### 3. 等待部署完成
-
-- Zeabur 會自動建構你的應用程式
-- 部署成功後，你會獲得一個 URL：`https://你的專案名稱.zeabur.app`
+1. 在服務頁面找到 "**Domains**"
+2. 複製 Zeabur 提供的網址（例如：`https://xxx.zeabur.app`）
+3. 在瀏覽器中訪問
 
 ---
 
-## 🔍 驗證部署
+## ✅ 驗證部署
 
-### 1. 檢查應用程式日誌
+### 測試清單
 
-在 Zeabur 控制台中，點擊你的服務 → "Logs"，確認：
-
-```
-✅ Started BookingApplication in X.XXX seconds
-✅ No errors related to database connection
-✅ No errors related to mail configuration
-```
-
-### 2. 訪問應用程式
-
-訪問：`https://你的專案名稱.zeabur.app`
-
-測試功能：
-- ✅ 首頁正常顯示
-- ✅ 可以註冊新用戶
-- ✅ 可以登入
-- ✅ 可以瀏覽住宿
-- ✅ 郵件發送功能（忘記密碼）
-
-### 3. 檢查資料庫連接
-
-訪問：`https://你的專案名稱.zeabur.app/api/accommodations`
-
-應該能看到 JSON 格式的住宿資料。
+- [ ] 首頁可以正常訪問
+- [ ] 可以查看住宿列表
+- [ ] 可以使用測試帳號登入（`admin` / `password`）
+- [ ] 可以創建訂單
+- [ ] 郵件功能正常（測試忘記密碼）
 
 ---
 
-## 🐛 常見問題排除
+## 📊 環境變數完整列表
 
-### 問題 1：應用程式無法啟動
+| 變數名稱 | 說明 | 範例值 | 必填 |
+|---------|------|--------|------|
+| `DATABASE_URL` | MySQL 連接 URL | `${MYSQL_URL}` | ✅ |
+| `DB_USERNAME` | 資料庫用戶名 | `${MYSQL_USERNAME}` | ✅ |
+| `DB_PASSWORD` | 資料庫密碼 | `${MYSQL_PASSWORD}` | ✅ |
+| `MAIL_USERNAME` | Gmail 帳號 | `your@gmail.com` | ✅ |
+| `MAIL_PASSWORD` | Gmail 應用程式密碼 | `abcd efgh ijkl mnop` | ✅ |
+| `APP_BASE_URL` | 應用程式網址 | `https://xxx.zeabur.app` | ✅ |
+| `DDL_AUTO` | Hibernate DDL 模式 | `update` | ✅ |
+| `SHOW_SQL` | 是否顯示 SQL | `false` | ⭕ |
+| `MAIL_HOST` | SMTP 主機 | `smtp.gmail.com` | ⭕ |
+| `MAIL_PORT` | SMTP 端口 | `587` | ⭕ |
 
-**錯誤：** `Access denied for user...`
+**說明：**
+- ✅ = 必填
+- ⭕ = 選填（有預設值）
+- `${MYSQL_URL}` = 引用 Zeabur MySQL 服務提供的變數
+
+---
+
+## 🔧 常見問題
+
+### 1. 應用程式無法啟動
+
+**可能原因：**
+- 環境變數設定錯誤
+- 資料庫連接失敗
 
 **解決方法：**
-1. 檢查 Zeabur 是否正確設定了 MySQL 服務
-2. 檢查環境變數 `DATABASE_URL`、`DB_USERNAME`、`DB_PASSWORD` 是否正確
-3. 在 Zeabur MySQL 服務中查看連接資訊
-
-### 問題 2：郵件發送失敗
-
-**錯誤：** `AuthenticationFailedException`
-
-**解決方法：**
-1. 確認環境變數 `MAIL_PASSWORD` 使用的是 Gmail **應用程式密碼**
-2. 確認環境變數 `MAIL_USERNAME` 格式正確
-3. 檢查 Gmail 帳號是否啟用了「兩步驟驗證」
-
-### 問題 3：資料表未創建
-
-**錯誤：** `Table 'booking_db.users' doesn't exist`
-
-**解決方法：**
-1. 確認 `spring.jpa.hibernate.ddl-auto` 設定為 `update` 或 `create`
-2. 確認 `spring.sql.init.mode=always` 已設定
-3. 檢查 `data.sql` 文件是否在正確位置
-
-### 問題 4：連接超時
-
-**錯誤：** `Connection timed out`
-
-**解決方法：**
-1. 檢查 Zeabur MySQL 服務是否正常運行
-2. 確認應用程式和 MySQL 在同一個專案中
-3. 檢查防火牆設定
+1. 檢查 "Logs" 標籤中的錯誤訊息
+2. 確認所有必要的環境變數都已設定
+3. 確認 MySQL 服務正在運行
 
 ---
 
-## 📊 環境變數對照表
+### 2. 資料庫連接失敗
 
-| 環境變數 | 用途 | 範例值 | 必要性 |
-|---------|------|--------|--------|
-| `DATABASE_URL` | MySQL 連接 URL | `jdbc:mysql://...` | ✅ 必要 |
-| `DB_USERNAME` | 資料庫用戶名 | `root` | ✅ 必要 |
-| `DB_PASSWORD` | 資料庫密碼 | `your_password` | ✅ 必要 |
-| `MAIL_HOST` | SMTP 主機 | `smtp.gmail.com` | ✅ 必要 |
-| `MAIL_PORT` | SMTP 端口 | `587` | ✅ 必要 |
-| `MAIL_USERNAME` | 郵件帳號 | `your@gmail.com` | ✅ 必要 |
-| `MAIL_PASSWORD` | 郵件密碼 | `app_password` | ✅ 必要 |
-| `MAIL_FROM` | 寄件者 | `your@gmail.com` | ⚪ 可選 |
-| `MAIL_FROM_NAME` | 寄件者名稱 | `訂房系統` | ⚪ 可選 |
-| `APP_BASE_URL` | 應用程式 URL | `https://your-app.zeabur.app` | ✅ 必要 |
-| `DDL_AUTO` | Hibernate DDL | `update` | ⚪ 可選 |
-| `SHOW_SQL` | 顯示 SQL | `false` | ⚪ 可選 |
-| `PORT` | 服務端口 | `8080` | ⚪ 可選 |
+**錯誤訊息：** `Communications link failure`
+
+**解決方法：**
+1. 確認 MySQL 服務已啟動
+2. 確認 `DATABASE_URL` 使用 `${MYSQL_URL}`
+3. 確認應用程式和 MySQL 在同一個專案中
 
 ---
 
-## 🎉 部署成功檢查清單
+### 3. 郵件發送失敗
+
+**錯誤訊息：** `Authentication failed`
+
+**解決方法：**
+1. 確認使用的是 **Gmail 應用程式密碼**，不是帳號密碼
+2. 確認 Gmail 已啟用兩步驟驗證
+3. 重新產生應用程式密碼並更新環境變數
+
+---
+
+### 4. 如何查看日誌
+
+1. 進入應用程式服務頁面
+2. 點擊 "**Logs**" 標籤
+3. 查看實時日誌輸出
+
+---
+
+### 5. 如何重新部署
+
+1. 修改代碼後推送到 GitHub
+2. Zeabur 會**自動檢測**並重新部署
+3. 或手動點擊 "**Redeploy**" 按鈕
+
+---
+
+## 🎯 部署後設定
+
+### 1. 設定自訂域名（選填）
+
+1. 在 Zeabur 購買域名或使用現有域名
+2. 在 "Domains" 標籤中添加域名
+3. 更新 `APP_BASE_URL` 環境變數
+
+### 2. 啟用 HTTPS
+
+Zeabur 自動為所有應用程式啟用 HTTPS，無需額外設定。
+
+### 3. 監控與日誌
+
+定期檢查：
+- "Logs" - 應用程式日誌
+- "Metrics" - 性能指標
+- "Environment Variables" - 環境變數
+
+---
+
+## 📝 部署檢查清單
 
 - [ ] GitHub 倉庫已創建並推送代碼
-- [ ] `application.properties` 使用環境變數
 - [ ] Zeabur 專案已創建
-- [ ] MySQL 服務已添加
-- [ ] 所有環境變數已設定
-- [ ] 應用程式部署成功
-- [ ] 可以訪問首頁
-- [ ] 資料庫連接正常
-- [ ] 郵件功能正常
-- [ ] 所有功能測試通過
+- [ ] MySQL 服務已添加並啟動
+- [ ] 應用程式服務已部署
+- [ ] 所有必要的環境變數已設定
+- [ ] Gmail 應用程式密碼已取得
+- [ ] `APP_BASE_URL` 已更新為實際網址
+- [ ] 應用程式已重新部署
+- [ ] 可以正常訪問首頁
+- [ ] 測試帳號可以登入
+- [ ] 郵件功能測試通過
 
 ---
 
-## 🔒 安全最佳實踐
+## 🆘 需要幫助？
 
-### ✅ 應該做的
+### Zeabur 官方資源
+- **文件**: https://zeabur.com/docs
+- **Discord**: https://discord.gg/zeabur
+- **GitHub**: https://github.com/zeabur/zeabur
 
-1. **使用環境變數** 管理所有敏感資訊
-2. **定期輪換密碼** 特別是資料庫和郵件密碼
-3. **啟用 HTTPS** Zeabur 預設提供
-4. **監控日誌** 定期檢查異常活動
-5. **限制訪問** 設定適當的 CORS 政策
-
-### ❌ 不應該做的
-
-1. ❌ 不要在代碼中硬編碼密碼
-2. ❌ 不要在公開的 Issue 或 PR 中討論敏感資訊
-3. ❌ 不要分享 Zeabur 環境變數截圖
-4. ❌ 不要使用弱密碼
-5. ❌ 不要在生產環境開啟 `show-sql=true`
+### 專案相關
+- **GitHub Issues**: https://github.com/howie960018/MY-BOOKING-COM/issues
+- **README**: 查看專案 README.md
 
 ---
 
-## 📚 相關資源
+## 🎉 部署成功！
 
-- [Zeabur 官方文檔](https://zeabur.com/docs)
-- [Zeabur 環境變數指南](https://zeabur.com/docs/environment/variables)
-- [Spring Boot 外部化配置](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.external-config)
-- [Gmail SMTP 設定](https://support.google.com/a/answer/176600)
+恭喜你成功將訂房系統部署到 Zeabur！
+
+現在你可以：
+- ✅ 分享網址給其他人使用
+- ✅ 繼續開發新功能
+- ✅ 推送代碼自動部署
+
+**專案網址：** `https://your-project.zeabur.app`
 
 ---
 
-## 💡 總結
-
-使用環境變數的好處：
-
-1. ✅ **安全**：敏感資訊不會出現在代碼中
-2. ✅ **靈活**：不同環境使用不同配置
-3. ✅ **方便**：部署時只需在 Zeabur 設定一次
-4. ✅ **團隊協作**：每個開發者可以使用自己的配置
-
-**核心概念：**
-- 代碼（GitHub）：公開，不含敏感資訊
-- 配置（Zeabur）：私密，通過環境變數管理
-
-這樣你就可以安全地將代碼上傳到 GitHub，同時在 Zeabur 上正常部署運行！🚀
+**最後更新**: 2025-11-09
 

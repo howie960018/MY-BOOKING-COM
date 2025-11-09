@@ -1,27 +1,71 @@
-# IDE
-.idea/
-.vscode/
-*.iml
+# Compiled class files
+*.class
 
-# OS
+# Package Files
+*.jar
+*.war
+*.ear
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+*.log
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# VS Code
+.vscode/
+
+# OS Files
 .DS_Store
 Thumbs.db
 
-# Project specific
-data/
+# Application Secrets
+application-local.properties
+application-prod.properties
+
+# Backup files
+*.backup
+*.bak
+*.old
+*-new.html
+*-backup.html
+
+# Database
 *.mv.db
 *.trace.db
-*.lock.db
+data/
 
 # Logs
-logs/
 *.log
+logs/
 
 # Temporary files
-temp/
 *.tmp
+*.temp
+~*
 
-# Documentation files that might contain sensitive info
-PRIVATE_NOTES.md
-TODO_PRIVATE.md
+# Personal notes (不上傳個人筆記)
+**/個人筆記.md
+**/TODO.md
+*私人*.md
 
