@@ -30,41 +30,59 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 允許 Swagger/OpenAPI
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
-                        // 管理員專用 API 端點
-                        .requestMatchers("/api/admin/**", "/api/bookings/admin/**").hasRole("ADMIN")
-                        // 管理員專用頁面
-                        .requestMatchers("/admin-dashboard", "/admin-accommodations", "/admin-bookings", "/admin-users").hasRole("ADMIN")
-                        // 房型管理頁面 (Admin 和 Owner 都可以訪問)
-                        .requestMatchers("/room-type-management").hasAnyRole("ADMIN", "OWNER")
-                        // 房東專用頁面和API端點
-                        .requestMatchers("/owner-dashboard", "/owner-accommodations", "/owner-bookings", "/api/owner/**").hasRole("OWNER")
-                        // 一般用戶頁面
-                        .requestMatchers("/user-bookings").authenticated()
-                        // 用戶個人資料和收藏功能（需登入）
-                        .requestMatchers("/user/profile", "/user/favorites", "/user/api/**", "/user/favorites/api/**").authenticated()
-                        // 忘記密碼和重設密碼（公開）
-                        .requestMatchers("/user/forgot-password", "/user/reset-password").permitAll()
-                        // 允許靜態資源和認證相關端點
-                        .requestMatchers("/h2-console/**", "/login", "/register", "/css/**", "/js/**", "/images/**","/api/auth/**").permitAll()
-                        // 允許公開訪問的 API 和頁面
-                        .requestMatchers("/api/accommodations/**", "/accommodations/**").permitAll()
-                        // 評論 API（讀取公開，新增需登入）
+
+                        // ===== 公開訪問（無需登入）=====
+                        // 首頁和瀏覽功能
+                        .requestMatchers("/", "/index", "/index.html").permitAll()
+                        // 住宿瀏覽相關
+                        .requestMatchers("/accommodations/**", "/accommodation/**").permitAll()
+                        .requestMatchers("/api/accommodations/**").permitAll()
+                        .requestMatchers("/api/room-types/**").permitAll()
+                        // 評論查詢（公開）
                         .requestMatchers("/api/reviews/accommodation/**").permitAll()
+                        // 靜態資源
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/static/**").permitAll()
+                        // 認證相關
+                        .requestMatchers("/login", "/register", "/api/auth/**").permitAll()
+                        // 忘記密碼
+                        .requestMatchers("/user/forgot-password", "/user/reset-password").permitAll()
+                        // H2 Console（開發用）
+                        .requestMatchers("/h2-console/**").permitAll()
+
+                        // ===== 需要登入的功能 =====
+                        // 預訂功能（需登入）
+                        .requestMatchers("/api/bookings/**").authenticated()
+                        // 收藏功能（需登入）
+                        .requestMatchers("/user/favorites/**", "/user/favorites/api/**").authenticated()
+                        // 評論新增/修改（需登入）
                         .requestMatchers("/api/reviews/**").authenticated()
-                        // 匯出功能權限設定
+                        // 用戶個人頁面
+                        .requestMatchers("/user-bookings", "/user-profile", "/user/profile", "/user/api/**").authenticated()
+
+                        // ===== 管理員專用 =====
+                        .requestMatchers("/admin-dashboard", "/admin-accommodations", "/admin-bookings", "/admin-users").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**", "/api/bookings/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/export/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/export/owner/**").hasRole("OWNER")
-                        .requestMatchers("/api/export/bookings").authenticated()
-                        // 統計功能權限設定
                         .requestMatchers("/api/statistics/admin/**").hasRole("ADMIN")
+
+                        // ===== 房東專用 =====
+                        .requestMatchers("/owner-dashboard", "/owner-accommodations", "/owner-bookings").hasRole("OWNER")
+                        .requestMatchers("/api/owner/**").hasRole("OWNER")
+                        .requestMatchers("/api/export/owner/**").hasRole("OWNER")
                         .requestMatchers("/api/statistics/owner/**").hasRole("OWNER")
-                        .requestMatchers("/api/statistics/**").authenticated()
-                        // 其他所有請求需要登入
+
+                        // ===== 房型管理（Admin 和 Owner 都可訪問）=====
+                        .requestMatchers("/room-type-management").hasAnyRole("ADMIN", "OWNER")
+
+                        // 其他請求需要登入
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
                         .successHandler((request, response, authentication) -> {
+                            // 檢查是否有重定向 URL
+                            String redirectUrl = request.getParameter("redirect");
+
                             // 輸出調試資訊
                             System.out.println("登入成功，用戶：" + authentication.getName());
                             System.out.println("擁有權限：" + authentication.getAuthorities());
@@ -78,8 +96,9 @@ public class SecurityConfig {
                                 System.out.println("導向到房東儀表板");
                                 response.sendRedirect("/owner-dashboard");
                             } else {
-                                System.out.println("導向到首頁");
-                                response.sendRedirect("/");
+                                System.out.println("導向到首頁或原頁面");
+                                // 如果有重定向 URL，導向該頁面，否則導向首頁
+                                response.sendRedirect(redirectUrl != null && !redirectUrl.isEmpty() ? redirectUrl : "/");
                             }
                         })
                         .failureUrl("/login?error=true")

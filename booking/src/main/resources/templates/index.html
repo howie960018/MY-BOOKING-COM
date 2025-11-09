@@ -93,16 +93,86 @@
     </style>
 </head>
 <body>
+<!-- 導覽列 -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-        <a class="navbar-brand" href="#">訂房系統</a>
-        <div class="navbar-nav ms-auto">
-            <a href="/user/favorites" class="btn btn-outline-light btn-sm me-2">❤️ 我的收藏</a>
-            <a href="/user-bookings" class="btn btn-outline-light btn-sm me-2">📋 我的訂單</a>
-            <a href="/user/profile" class="btn btn-outline-light btn-sm me-2">👤 個人資料</a>
-            <form th:action="@{/logout}" method="post" style="display:inline;">
-                <button type="submit" class="btn btn-outline-light btn-sm">登出</button>
-            </form>
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">🏨 訂房系統</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <!-- 未登入時顯示 -->
+                <li class="nav-item" th:if="${#authorization.expression('!isAuthenticated()')}">
+                    <a class="nav-link" href="/register">📝 註冊</a>
+                </li>
+                <li class="nav-item" th:if="${#authorization.expression('!isAuthenticated()')}">
+                    <a class="btn btn-primary btn-sm ms-2" href="/login">🔐 登入</a>
+                </li>
+
+                <!-- 登入後顯示（一般用戶）-->
+                <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()') && #authorization.expression('hasRole(''USER'')')}">
+                    <a class="nav-link" href="/user/favorites">❤️ 我的收藏</a>
+                </li>
+                <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()') && #authorization.expression('hasRole(''USER'')')}">
+                    <a class="nav-link" href="/user-bookings">📋 我的訂單</a>
+                </li>
+                <li class="nav-item dropdown" th:if="${#authorization.expression('isAuthenticated()') && #authorization.expression('hasRole(''USER'')')}">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                        👤 <span th:text="${#authentication.name}">用戶</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="/user/profile">個人資料</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form th:action="@{/logout}" method="post" class="d-inline">
+                                <button type="submit" class="dropdown-item">登出</button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- 登入後顯示（房東）-->
+                <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()') && #authorization.expression('hasRole(''OWNER'')')}">
+                    <a class="nav-link" href="/owner-dashboard">🏠 管理面板</a>
+                </li>
+                <li class="nav-item dropdown" th:if="${#authorization.expression('isAuthenticated()') && #authorization.expression('hasRole(''OWNER'')')}">
+                    <a class="nav-link dropdown-toggle" href="#" id="ownerDropdown" role="button" data-bs-toggle="dropdown">
+                        👤 <span th:text="${#authentication.name}">房東</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="/owner-accommodations">我的住宿</a></li>
+                        <li><a class="dropdown-item" href="/owner-bookings">訂單管理</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form th:action="@{/logout}" method="post" class="d-inline">
+                                <button type="submit" class="dropdown-item">登出</button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- 登入後顯示（管理員）-->
+                <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()') && #authorization.expression('hasRole(''ADMIN'')')}">
+                    <a class="nav-link" href="/admin-dashboard">⚙️ 管理面板</a>
+                </li>
+                <li class="nav-item dropdown" th:if="${#authorization.expression('isAuthenticated()') && #authorization.expression('hasRole(''ADMIN'')')}">
+                    <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
+                        👤 <span th:text="${#authentication.name}">管理員</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="/admin-users">用戶管理</a></li>
+                        <li><a class="dropdown-item" href="/admin-accommodations">住宿管理</a></li>
+                        <li><a class="dropdown-item" href="/admin-bookings">訂單管理</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form th:action="@{/logout}" method="post" class="d-inline">
+                                <button type="submit" class="dropdown-item">登出</button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
         </div>
     </div>
 </nav>
@@ -314,6 +384,15 @@
     // 獲取 CSRF token
     const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+    /**
+     * 檢查用戶是否已登入
+     * Thymeleaf 會在渲染時注入登入狀態
+     */
+    const isUserLoggedIn = () => {
+        // 使用 Thymeleaf 注入的變數
+        return /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
+    };
 
     // 創建帶 CSRF token 的 fetch 選項
     function getFetchOptions(method = 'GET', body = null) {
@@ -846,6 +925,16 @@
     }
 
     function confirmBooking() {
+        // 檢查是否登入
+        if (!isUserLoggedIn()) {
+            if (confirm('預訂功能需要登入，是否前往登入？')) {
+                // 保存當前頁面 URL
+                sessionStorage.setItem('redirectUrl', window.location.href);
+                window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+            }
+            return;
+        }
+
         const roomTypeId = document.getElementById('modalRoomTypeSelect').value;
         const checkIn = document.getElementById('modalCheckIn').value;
         const checkOut = document.getElementById('modalCheckOut').value;
@@ -962,6 +1051,11 @@
      * 載入所有住宿的收藏狀態
      */
     function loadFavoriteStates(accommodationIds) {
+        // 只有登入時才載入收藏狀態
+        if (!isUserLoggedIn()) {
+            return;
+        }
+
         accommodationIds.forEach(id => {
             fetch(`/user/favorites/api/check/${id}`, {
                 headers: getHeaders(),
@@ -980,6 +1074,16 @@
      */
     function toggleFavorite(accommodationId, event) {
         event.stopPropagation(); // 防止觸發卡片點擊事件
+
+        // 檢查是否登入
+        if (!isUserLoggedIn()) {
+            if (confirm('收藏功能需要登入，是否前往登入？')) {
+                // 保存當前頁面 URL
+                sessionStorage.setItem('redirectUrl', window.location.href);
+                window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+            }
+            return;
+        }
 
         fetch(`/user/favorites/api/toggle/${accommodationId}`, {
             method: 'POST',
