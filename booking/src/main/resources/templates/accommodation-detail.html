@@ -390,6 +390,16 @@
     const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
+    /**
+     * 檢查用戶是否已登入
+     * 透過檢查導覽列是否有登入按鈕來判斷
+     */
+    const isUserLoggedIn = () => {
+        // 檢查導覽列是否有「登入」按鈕，沒有表示已登入
+        const loginBtn = document.querySelector('a[href="/login"]');
+        return !loginBtn;
+    };
+
     // 創建帶 CSRF token 的 fetch 選項
     function getFetchOptions(method = 'GET', body = null) {
         const options = {
@@ -871,6 +881,16 @@
 
     // 確認訂房
     function confirmBooking() {
+        // 檢查是否登入
+        if (!isUserLoggedIn()) {
+            if (confirm('預訂功能需要登入，是否前往登入？')) {
+                // 保存當前頁面 URL
+                sessionStorage.setItem('redirectUrl', window.location.href);
+                window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+            }
+            return;
+        }
+
         const roomTypeId = document.getElementById('modalRoomTypeSelect').value;
         const checkIn = document.getElementById('modalCheckIn').value;
         const checkOut = document.getElementById('modalCheckOut').value;
@@ -931,7 +951,18 @@
         formData.append('quantity', quantity);
 
         fetch('/api/bookings/book-by-room-type', getFetchOptions('POST', formData))
-        .then(r => r.json())
+        .then(r => {
+            // 檢查 HTTP 狀態碼
+            if (r.status === 401 || r.status === 403) {
+                // 未授權或禁止訪問，導向登入
+                if (confirm('您尚未登入或登入已過期，是否前往登入？')) {
+                    sessionStorage.setItem('redirectUrl', window.location.href);
+                    window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+                }
+                throw new Error('未授權');
+            }
+            return r.json();
+        })
         .then(data => {
             if (data.success) {
                 alert('✅ 訂房成功！\n訂單編號：' + data.bookingId);
@@ -946,7 +977,10 @@
         })
         .catch(err => {
             console.error('訂房失敗:', err);
-            alert('❌ 訂房失敗，請稍後再試');
+            // 如果不是未授權錯誤才顯示一般錯誤訊息
+            if (err.message !== '未授權') {
+                alert('❌ 訂房失敗，請稍後再試');
+            }
         });
     }
 
