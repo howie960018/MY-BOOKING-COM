@@ -3,11 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>房東訂單管理</title>
+    <title>訂單管理 - 訂房系統</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <meta name="_csrf" th:content="${_csrf?.token}"/>
     <meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
     <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .page-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
         .filter-btn {
             margin-right: 5px;
         }
@@ -30,13 +40,48 @@
     </style>
 </head>
 <body>
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3>我的訂單管理</h3>
-        <div>
-            <a href="/owner-dashboard" class="btn btn-secondary me-2">返回儀表板</a>
-            <button class="btn btn-primary" onclick="loadBookings()">重新載入</button>
+
+<!-- 黑底導航欄 -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">🏨 訂房系統</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/owner-dashboard">📊 儀表板</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/owner-accommodations">🏠 住宿管理</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/owner-bookings">📋 訂單管理</a>
+                </li>
+                <li class="nav-item">
+                    <form th:action="@{/logout}" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-outline-light btn-sm ms-2">登出</button>
+                    </form>
+                </li>
+            </ul>
         </div>
+    </div>
+</nav>
+
+<!-- 頁面標題區 -->
+<div class="page-header">
+    <div class="container">
+        <h1 class="mb-2">📋 訂單管理</h1>
+        <p class="mb-0 opacity-75">檢視與管理您住宿的所有訂單</p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- 工具欄 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">📊 訂單總覽</h4>
+        <button class="btn btn-primary" onclick="loadBookings()">🔄 重新載入</button>
     </div>
 
     <!-- 篩選區域 -->
