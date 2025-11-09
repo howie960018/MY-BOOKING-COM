@@ -32,7 +32,15 @@ public class OpenApiConfig {
 
                                 ## 🎯 系統概述
                                 
-                                這是一個功能完整的訂房管理系統，提供以下核心功能：
+                                這是一個功能完整的訂房管理系統，**採用開放瀏覽設計**（類似 Booking.com）。
+                                
+                                ### 核心特色
+                                - 🌐 **開放瀏覽**：訪客無需登入即可查看住宿、搜尋、查看詳情
+                                - 🔐 **安全預訂**：預訂、收藏等功能需要登入
+                                - 👥 **多角色系統**：管理員、房東、一般用戶
+                                - 📊 **完整功能**：住宿管理、訂單處理、統計分析
+                                
+                                ### 主要功能
                                 - 🏨 住宿與房型管理（含圖片上傳）
                                 - 📅 房間預訂與庫存管理
                                 - ⭐ 收藏與評論系統
@@ -42,13 +50,44 @@ public class OpenApiConfig {
 
                                 ---
 
+                                ## 🌐 訪問控制說明
+                                
+                                ### 🔓 公開訪問（無需登入）
+                                - ✅ 首頁瀏覽
+                                - ✅ 住宿列表查詢
+                                - ✅ 住宿詳情頁面
+                                - ✅ 搜尋與排序功能
+                                - ✅ 房型資訊查看
+                                - ✅ 評論查看
+                                
+                                ### 🔐 需要登入
+                                - 🔒 建立訂單
+                                - 🔒 查看我的訂單
+                                - 🔒 收藏功能
+                                - 🔒 發表評論
+                                - 🔒 個人資料管理
+                                
+                                ### 👨‍💼 管理員專用
+                                - 🔒 全局訂單管理
+                                - 🔒 全局住宿管理
+                                - 🔒 用戶管理
+                                - 🔒 系統統計
+                                
+                                ### 🏠 房東專用
+                                - 🔒 自己的住宿管理
+                                - 🔒 房型管理
+                                - 🔒 訂單查看
+                                - 🔒 營運統計
+
+                                ---
+
                                 ## 🔐 認證方式
                                 
                                 本 API 使用 **Session-based 認證**（Spring Security）。
                                 
                                 ### 使用步驟：
                                 1. **登入系統**
-                                   - 訪問: `http://localhost:8080/login`
+                                   - 訪問: `/login` (網頁登入)
                                    - 或使用 API: `POST /api/auth/login`
                                 
                                 2. **取得 Session**
@@ -58,6 +97,10 @@ public class OpenApiConfig {
                                 3. **使用 API**
                                    - 在同個瀏覽器中使用 Swagger UI
                                    - 或在 API 請求中帶上 `JSESSIONID` Cookie
+                                
+                                4. **登出**
+                                   - 訪問: `POST /logout`
+                                   - 登出後返回首頁，可繼續瀏覽住宿
 
                                 ---
 
@@ -77,29 +120,63 @@ public class OpenApiConfig {
                                 ## 📋 API 分組說明
                                 
                                 ### 🔓 公開 API（無需登入）
-                                - **Accommodations**: 住宿資訊查詢、搜尋、排序
-                                - **Room Types**: 房型資訊查詢、可用性檢查
-                                - **Reviews**: 評論查詢（讀取）
-                                - **Authentication**: 使用者註冊、登入
+                                這些 API 訪客可以直接使用，無需註冊或登入：
                                 
-                                ### 🔒 需登入 API
-                                - **Bookings**: 訂單建立、查詢、取消
-                                - **Favorites**: 收藏管理（添加、移除、查詢）
-                                - **Reviews**: 評論管理（新增、修改）
-                                - **User Profile**: 個人資料、密碼管理
-                                - **Password Reset**: 忘記密碼、重設密碼
+                                - **Accommodations**: 
+                                  - `GET /api/accommodations` - 獲取所有住宿
+                                  - `GET /api/accommodations/search` - 搜尋住宿
+                                  - `GET /api/accommodations/{id}` - 查看住宿詳情
+                                  
+                                - **Room Types**: 
+                                  - `GET /api/room-types/by-accommodation/{id}` - 查看房型列表
+                                  - `GET /api/room-types/{id}` - 查看房型詳情
+                                  - `GET /api/room-types/{id}/availability` - 檢查房型可用性
+                                  
+                                - **Reviews**: 
+                                  - `GET /api/reviews/accommodation/{id}` - 查看住宿評論
+                                  
+                                - **Authentication**: 
+                                  - `POST /api/auth/register` - 用戶註冊
+                                  - `POST /api/auth/login` - 用戶登入
+                                
+                                ### 🔒 需登入 API（一般用戶）
+                                這些 API 需要先登入才能使用：
+                                
+                                - **Bookings**: 
+                                  - `POST /api/bookings/book-by-room-type` - 建立訂單
+                                  - `GET /api/bookings` - 查看我的訂單
+                                  - `DELETE /api/bookings/{id}` - 取消訂單
+                                  
+                                - **Favorites**: 
+                                  - `POST /user/favorites/api/toggle/{id}` - 切換收藏狀態
+                                  - `GET /user/favorites/api/check/{id}` - 檢查收藏狀態
+                                  - `GET /user/favorites/api/list` - 查看我的收藏
+                                  
+                                - **Reviews**: 
+                                  - `POST /api/reviews` - 發表評論
+                                  
+                                - **User Profile**: 
+                                  - `GET /user/api/profile` - 查看個人資料
+                                  - `PUT /user/api/profile` - 更新個人資料
+                                  - `PUT /user/api/change-password` - 修改密碼
                                 
                                 ### 👨‍💼 管理員專用 API
-                                - **Admin Bookings**: 訂單管理（查看全部、確認、取消）
-                                - **Admin Accommodations**: 住宿管理（CRUD）
-                                - **Admin Statistics**: 全局統計資料
+                                需要 ADMIN 角色：
+                                
+                                - **Admin Users**: 用戶管理（查看、角色升級/降級）
+                                - **Admin Accommodations**: 全局住宿管理（CRUD）
+                                - **Admin Bookings**: 全局訂單管理（查看、確認、取消）
+                                - **Admin Statistics**: 系統統計資料
+                                - **Admin Export**: 報表匯出
                                 
                                 ### 🏠 房東專用 API
-                                - **Owner Accommodations**: 住宿管理（自己的）
-                                - **Owner Room Types**: 房型管理（CRUD）
-                                - **Owner Bookings**: 訂單查詢（自己住宿的訂單）
-                                - **Owner Statistics**: 經營統計資料
-                                - **Export**: 訂單報表匯出
+                                需要 OWNER 角色：
+                                
+                                - **Owner Accommodations**: 管理自己的住宿（CRUD）
+                                - **Owner Room Types**: 管理自己的房型（CRUD、庫存）
+                                - **Owner Bookings**: 查看自己住宿的訂單
+                                - **Owner Statistics**: 自己的經營統計資料
+                                - **Owner Export**: 自己的訂單報表匯出
 
                                 ---
 
