@@ -98,7 +98,7 @@
 <!-- 導覽列 -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="/">🏨 訂房系統</a>
+        <a class="navbar-brand" href="/">訂房系統</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -106,10 +106,10 @@
             <ul class="navbar-nav ms-auto">
                 <!-- 未登入時顯示 -->
                 <li class="nav-item" sec:authorize="!isAuthenticated()">
-                    <a class="nav-link" href="/register">📝 註冊</a>
+                    <a class="nav-link" href="/register">註冊</a>
                 </li>
                 <li class="nav-item" sec:authorize="!isAuthenticated()">
-                    <a class="btn btn-primary btn-sm ms-2" href="/login">🔐 登入</a>
+                    <a class="btn btn-primary btn-sm ms-2" href="/login">登入</a>
                 </li>
 
                 <!-- 登入後顯示（一般用戶）-->
@@ -117,7 +117,7 @@
                     <a class="nav-link" href="/user/favorites">❤️ 我的收藏</a>
                 </li>
                 <li class="nav-item" sec:authorize="hasRole('USER')">
-                    <a class="nav-link" href="/user-bookings">📋 我的訂單</a>
+                    <a class="nav-link" href="/user-bookings">我的訂單</a>
                 </li>
                 <li class="nav-item dropdown" sec:authorize="hasRole('USER')">
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
@@ -136,7 +136,7 @@
 
                 <!-- 登入後顯示（房東）-->
                 <li class="nav-item" sec:authorize="hasRole('OWNER')">
-                    <a class="nav-link" href="/owner-dashboard">🏠 管理面板</a>
+                    <a class="nav-link" href="/owner-dashboard">管理面板</a>
                 </li>
                 <li class="nav-item dropdown" sec:authorize="hasRole('OWNER')">
                     <a class="nav-link dropdown-toggle" href="#" id="ownerDropdown" role="button" data-bs-toggle="dropdown">
@@ -156,7 +156,7 @@
 
                 <!-- 登入後顯示（管理員）-->
                 <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-                    <a class="nav-link" href="/admin-dashboard">⚙️ 管理面板</a>
+                    <a class="nav-link" href="/admin-dashboard">管理面板</a>
                 </li>
                 <li class="nav-item dropdown" sec:authorize="hasRole('ADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
@@ -184,7 +184,7 @@
     <div class="search-hero mb-4">
         <div class="card shadow-lg border-0">
             <div class="card-body p-4">
-                <h2 class="text-center mb-4">🏨 尋找您的理想住宿</h2>
+                <h2 class="text-center mb-4">尋找理想住宿</h2>
 
                 <div class="row g-3 align-items-end">
                     <!-- 地點/飯店名稱搜尋 -->
@@ -271,11 +271,11 @@
                     <label class="me-2">排序：</label>
                     <select id="sortBy" class="form-select d-inline-block" style="width: auto;" onchange="applySorting()">
                         <option value="">我們的推薦</option>
-                        <option value="price_asc">💰 價格：低到高</option>
-                        <option value="price_desc">💰 價格：高到低</option>
-                        <option value="rating">⭐ 評分最高</option>
-                        <option value="popularity">🔥 最受歡迎</option>
-                        <option value="distance">📍 距離最近</option>
+                        <option value="price_asc">價格：低到高</option>
+                        <option value="price_desc">價格：高到低</option>
+                        <option value="rating">⭐評分最高</option>
+                        <option value="popularity">最受歡迎</option>
+                        <option value="distance">距離最近</option>
                     </select>
                 </div>
             </div>
@@ -300,7 +300,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">🎯 確認訂房</h5>
+                <h5 class="modal-title">確認訂房</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -802,15 +802,15 @@
             <h5 class="card-title">${acc.name}</h5>
             ${acc.rating ? `<div class="mb-2"><span class="badge bg-warning text-dark">⭐ ${acc.rating}</span> <small class="text-muted">(${acc.reviewCount || 0} 則評論)</small></div>` : ''}
             <p class="card-text">
-              <strong>📍 地點:</strong> ${acc.location}<br>
-              <strong>📝 描述:</strong> ${acc.description || ''}<br>
-              <strong>💰 價格:</strong> NT$ ${acc.pricePerNight || 0} / 晚<br>
-              ${acc.distanceFromCenter ? `<strong>🚶 距離市中心:</strong> ${acc.distanceFromCenter} 公里<br>` : ''}
-              ${acc.bookingCount > 100 ? `<span class="badge bg-danger">🔥 熱門</span>` : ''}
+              <strong>地點:</strong> ${acc.location}<br>
+              <strong>描述:</strong> ${acc.description || ''}<br>
+              <strong>價格:</strong> NT$ ${acc.pricePerNight || 0} / 晚<br>
+              ${acc.distanceFromCenter ? `<strong>距離市中心:</strong> ${acc.distanceFromCenter} 公里<br>` : ''}
+              ${acc.bookingCount > 100 ? `<span class="badge bg-danger">熱門</span>` : ''}
             </p>
             <div class="d-flex gap-2">
               <a href="/accommodations/${acc.id}" class="btn btn-info flex-fill">
-                📖 查看詳情
+                查看詳情
               </a>
               <button class="btn btn-primary flex-fill" onclick="openBookingModal(${acc.id}, '${escapeHtml(acc.name)}', '${escapeHtml(acc.location)}')">
                 🔍 快速訂房

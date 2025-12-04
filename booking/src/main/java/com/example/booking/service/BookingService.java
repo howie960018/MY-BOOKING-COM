@@ -138,8 +138,10 @@ public class BookingService {
         User user = userRepo.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("找不到用戶：" + username));
 
-        RoomType rt = roomTypeRepo.findById(roomTypeId)
+        // 🔒 使用悲觀鎖查詢房型（關鍵修改）
+        RoomType rt = roomTypeRepo.findByIdWithLock(roomTypeId)
                 .orElseThrow(() -> new RuntimeException("找不到房型 ID=" + roomTypeId));
+
 
         Long alreadyBooked = bookingRepo.sumBookedQuantityBetween(roomTypeId, checkIn, checkOut);
         int totalRooms = rt.getTotalRooms();

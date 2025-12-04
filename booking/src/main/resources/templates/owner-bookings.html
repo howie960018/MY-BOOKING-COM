@@ -44,7 +44,7 @@
 <!-- 黑底導航欄 -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="/">🏨 訂房系統</a>
+        <a class="navbar-brand" href="/">訂房系統</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -72,7 +72,7 @@
 <!-- 頁面標題區 -->
 <div class="page-header">
     <div class="container">
-        <h1 class="mb-2">📋 訂單管理</h1>
+        <h1 class="mb-2">訂單管理</h1>
         <p class="mb-0 opacity-75">檢視與管理您住宿的所有訂單</p>
     </div>
 </div>
@@ -80,14 +80,14 @@
 <div class="container">
     <!-- 工具欄 -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="mb-0">📊 訂單總覽</h4>
+        <h4 class="mb-0">訂單總覽</h4>
         <button class="btn btn-primary" onclick="loadBookings()">🔄 重新載入</button>
     </div>
 
     <!-- 篩選區域 -->
     <div class="card mb-4">
         <div class="card-header">
-            <h5 class="mb-0">📋 訂單篩選</h5>
+            <h5 class="mb-0">訂單篩選</h5>
         </div>
         <div class="card-body">
             <!-- 狀態篩選 -->
@@ -312,7 +312,7 @@
         filterInfo.id = 'filterInfo';
         filterInfo.className = 'alert alert-info mt-3';
         filterInfo.innerHTML = `
-            <strong>📅 日期篩選已套用：</strong>
+            <strong>日期篩選已套用：</strong>
             ${startDate ? `從 ${startDate}` : ''}
             ${startDate && endDate ? ' 至 ' : ''}
             ${endDate ? `到 ${endDate}` : ''}
@@ -425,7 +425,7 @@
         if (endDate) params.append('endDate', endDate);
         if (params.toString()) url += '?' + params.toString();
 
-        btn.innerHTML = '⏳ 匯出中...';
+        btn.innerHTML = '匯出中...';
         btn.disabled = true;
 
         fetch(url, {

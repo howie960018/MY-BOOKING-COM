@@ -76,20 +76,20 @@
 <!-- 黑底導航欄 -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="/">🏨 訂房系統</a>
+        <a class="navbar-brand" href="/">訂房系統</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="/owner-dashboard">📊 儀表板</a>
+                    <a class="nav-link" href="/owner-dashboard">儀表板</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" href="/owner-accommodations">🏠 住宿管理</a>
+                    <a class="nav-link active" href="/owner-accommodations">住宿管理</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/owner-bookings">📋 訂單管理</a>
+                    <a class="nav-link" href="/owner-bookings">訂單管理</a>
                 </li>
                 <li class="nav-item">
                     <form th:action="@{/logout}" method="post" class="d-inline">
@@ -104,7 +104,7 @@
 <!-- 頁面標題區 -->
 <div class="page-header">
     <div class="container">
-        <h1 class="mb-2">🏠 住宿管理</h1>
+        <h1 class="mb-2">住宿管理</h1>
         <p class="mb-0 opacity-75">新增、編輯與管理您的住宿資料</p>
     </div>
 </div>
@@ -132,7 +132,7 @@
 
                 <!-- 新增圖片 URL 欄位 -->
                 <div class="form-group">
-                    <label for="imageUrl">🖼️ 圖片 URL <span style="color: red;">*</span></label>
+                    <label for="imageUrl">圖片 URL <span style="color: red;">*</span></label>
                     <input type="url" id="imageUrl" name="imageUrl"
                            placeholder="https://example.com/image.jpg" required>
                     <small style="color: #666; display: block; margin-top: 5px;">
@@ -149,7 +149,7 @@
 
                 <!-- 設施與服務 -->
                 <div class="form-group">
-                    <label for="amenities">🏠 設施與服務</label>
+                    <label for="amenities">設施與服務</label>
                     <textarea id="amenities" name="amenities" rows="3"
                               placeholder="例如：WiFi, 停車場, 早餐, 健身房, 游泳池"></textarea>
                     <small style="color: #666; display: block; margin-top: 5px;">
@@ -159,7 +159,7 @@
 
                 <!-- 附近景點 -->
                 <div class="form-group">
-                    <label for="nearbyAttractions">🗺️ 附近景點</label>
+                    <label for="nearbyAttractions">附近景點</label>
                     <textarea id="nearbyAttractions" name="nearbyAttractions" rows="3"
                               placeholder="例如：台北101, 信義商圈, 國父紀念館"></textarea>
                     <small style="color: #666; display: block; margin-top: 5px;">
@@ -169,7 +169,7 @@
 
                 <!-- 聯絡資訊 -->
                 <div class="form-group">
-                    <label for="address">📍 詳細地址</label>
+                    <label for="address">詳細地址</label>
                     <input type="text" id="address" name="address"
                            placeholder="例如：台北市信義區信義路五段7號">
                 </div>
@@ -213,7 +213,7 @@
 
                 <!-- 圖片 URL 欄位 -->
                 <div class="form-group">
-                    <label for="editImageUrl">🖼️ 圖片 URL <span style="color: red;">*</span></label>
+                    <label for="editImageUrl">圖片 URL <span style="color: red;">*</span></label>
                     <input type="url" id="editImageUrl" name="imageUrl"
                            placeholder="https://example.com/image.jpg" required>
 
@@ -234,7 +234,7 @@
 
                 <!-- 設施與服務 -->
                 <div class="form-group">
-                    <label for="editAmenities">🏠 設施與服務</label>
+                    <label for="editAmenities">設施與服務</label>
                     <textarea id="editAmenities" name="amenities" rows="3"
                               placeholder="例如：WiFi, 停車場, 早餐, 健身房, 游泳池"></textarea>
                     <small style="color: #666; display: block; margin-top: 5px;">
@@ -244,7 +244,7 @@
 
                 <!-- 附近景點 -->
                 <div class="form-group">
-                    <label for="editNearbyAttractions">🗺️ 附近景點</label>
+                    <label for="editNearbyAttractions">附近景點</label>
                     <textarea id="editNearbyAttractions" name="nearbyAttractions" rows="3"
                               placeholder="例如：台北101, 信義商圈, 國父紀念館"></textarea>
                     <small style="color: #666; display: block; margin-top: 5px;">
@@ -254,7 +254,7 @@
 
                 <!-- 聯絡資訊 -->
                 <div class="form-group">
-                    <label for="editAddress">📍 詳細地址</label>
+                    <label for="editAddress">詳細地址</label>
                     <input type="text" id="editAddress" name="address"
                            placeholder="例如：台北市信義區信義路五段7號">
                 </div>
